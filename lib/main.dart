@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 
 import 'blocs/course_bloc.dart';
 import 'blocs/student_bloc.dart';
@@ -16,7 +16,6 @@ import 'repositories/course_repository.dart';
 import 'repositories/student_repository.dart';
 import 'repositories/tutor_repository.dart';
 import 'layouts/admin_layout.dart';
-import 'theme_provider.dart';
 
 void main() {
   runApp(Application());
@@ -83,24 +82,24 @@ class Application extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    return BlocProvider(
+      create: (context) => ThemeBloc()..add(LoadTheme()),
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => TutorBloc(TutorRepository())),
           BlocProvider(create: (context) => StudentBloc(StudentRepository())),
           BlocProvider(create: (context) => CourseBloc(CourseRepository())),
         ],
-        child: Consumer<ThemeProvider>(
-          builder: (context, themeProvider, child) => MaterialApp.router(
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, state) => MaterialApp.router(
             routerConfig: router,
             supportedLocales: FLocalizations.supportedLocales,
             localizationsDelegates: const [
               ...FLocalizations.localizationsDelegates,
             ],
-            theme: themeProvider.themeData.toApproximateMaterialTheme(),
+            theme: state.themeData?.toApproximateMaterialTheme(),
             builder: (_, child) => FTheme(
-              data: themeProvider.themeData,
+              data: state.themeData ?? theme,
               child: FToaster(child: FTooltipGroup(child: child!)),
             ),
           ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
-import '../theme_provider.dart';
+import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 
 class AdminLayout extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -154,17 +153,18 @@ class AdminLayout extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Consumer<ThemeProvider>(
-                          builder: (context, themeProvider, child) => FTooltip(
+                        BlocBuilder<ThemeBloc, ThemeState>(
+                          builder: (context, state) => FTooltip(
                             tipBuilder: (context, controller) => Text(
-                              themeProvider.isDark
+                              state.isDark
                                   ? 'Switch to light mode'
                                   : 'Switch to dark mode',
                             ),
                             child: FButton(
-                              onPress: themeProvider.toggle,
+                              onPress: () =>
+                                  context.read<ThemeBloc>().add(ToggleTheme()),
                               child: Icon(
-                                themeProvider.isDark
+                                state.isDark
                                     ? Icons.light_mode
                                     : Icons.dark_mode,
                               ),
