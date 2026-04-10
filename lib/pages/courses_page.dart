@@ -140,6 +140,7 @@ class _CoursesPageState extends State<CoursesPage> {
         );
       },
       count: courses.length,
+      divider: .full,
     );
   }
 

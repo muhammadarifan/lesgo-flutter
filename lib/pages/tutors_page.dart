@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../blocs/tutor_bloc.dart';
 import '../models/tutor.dart';
 import '../enums/gender_enum.dart';
@@ -26,9 +27,13 @@ class _TutorsPageState extends State<TutorsPage> {
     return BlocConsumer<TutorBloc, TutorState>(
       listener: (context, state) {
         if (state is TutorError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          showFToast(
+            context: context,
+            variant: .destructive,
+            icon: Icon(FIcons.circleX),
+            title: Text('Error'),
+            description: Text(state.message),
+          );
         }
       },
       builder: (context, state) {
@@ -57,30 +62,30 @@ class _TutorsPageState extends State<TutorsPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Material(
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'Search tutors...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
+                        child: FTextField(
+                          prefixBuilder: (context, style, variants) => Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 8.0,
                             ),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                              });
-                            },
+                            child: const Icon(FIcons.search),
                           ),
+                          onSubmit: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
                       FButton(
-                        onPress: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) => _buildTutorForm(),
-                          );
-                        },
+                        onPress: () => showFPersistentSheet(
+                          context: context,
+                          style: const .delta(flingVelocity: 700),
+                          side: .rtl,
+                          builder: (context, controller) =>
+                              _buildTutorForm(controller: controller),
+                        ),
                         suffix: const Icon(Icons.add),
                         child: const Text('Add Tutor'),
                       ),
@@ -89,7 +94,7 @@ class _TutorsPageState extends State<TutorsPage> {
                   const SizedBox(height: 16),
 
                   // Tutors list
-                  Expanded(child: _buildTutorsList(filteredTutors)),
+                  Expanded(child: _buildTutorsList(context, filteredTutors)),
                 ],
               ),
             ),
@@ -103,7 +108,7 @@ class _TutorsPageState extends State<TutorsPage> {
     );
   }
 
-  Widget _buildTutorsList(List<Tutor> tutors) {
+  Widget _buildTutorsList(BuildContext parentContext, List<Tutor> tutors) {
     if (tutors.isEmpty) {
       return const Center(child: Text('No tutors found'));
     }
@@ -112,24 +117,34 @@ class _TutorsPageState extends State<TutorsPage> {
       itemBuilder: (context, index) {
         final tutor = tutors[index];
         return FItem(
-          prefix: FAvatar.raw(child: Text(tutor.name[0].toUpperCase())),
+          prefix: FAvatar.raw(child: Icon(FIcons.user)),
           title: Text(tutor.name),
-          subtitle: Text(
-            '${tutor.gender.displayName} • ${tutor.isActive ? 'Active' : 'Inactive'}',
-          ),
-          details: Text(tutor.email),
+          subtitle: Text('${tutor.email} - ${tutor.phone}'),
           suffix: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: .min,
+            spacing: 8,
             children: [
-              FButton(
-                child: Icon(Icons.edit),
-                onPress: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => _buildTutorForm(tutor),
+              FSwitch(
+                value: tutor.isActive,
+                onChange: (value) {
+                  context.read<TutorBloc>().add(
+                    UpdateTutor(tutor.id, tutor.copyWith(isActive: value)),
                   );
                 },
+              ),
+              FButton(
+                child: Icon(FIcons.eye),
+                onPress: () => _showTutorDetails(tutor),
+              ),
+              FButton(
+                child: Icon(FIcons.pencil),
+                onPress: () => showFPersistentSheet(
+                  context: parentContext,
+                  style: const .delta(flingVelocity: 700),
+                  side: .rtl,
+                  builder: (context, controller) =>
+                      _buildTutorForm(controller: controller, tutor: tutor),
+                ),
               ),
               FButton(
                 child: Icon(Icons.delete),
@@ -137,190 +152,178 @@ class _TutorsPageState extends State<TutorsPage> {
               ),
             ],
           ),
-          onPress: () => _showTutorDetails(tutor),
         );
       },
       count: tutors.length,
     );
   }
 
-  Widget _buildTutorForm([Tutor? tutor]) {
+  Widget _buildTutorForm({
+    Tutor? tutor,
+    required FPersistentSheetController controller,
+  }) {
     final isEditing = tutor != null;
-    String name = isEditing ? tutor!.name : '';
-    String email = isEditing ? tutor!.email : '';
-    String phone = isEditing ? tutor!.phone : '';
-    String address = isEditing ? tutor!.address : '';
-    GenderEnum gender = isEditing ? tutor!.gender : GenderEnum.male;
-    bool isActive = isEditing ? tutor!.isActive : true;
+    final formKey = GlobalKey<FormState>();
+    String name = isEditing ? tutor.name : '';
+    String email = isEditing ? tutor.email : '';
+    String phone = isEditing ? tutor.phone : '';
+    String address = isEditing ? tutor.address : '';
+    GenderEnum gender = isEditing ? tutor.gender : GenderEnum.male;
+    bool isActive = isEditing ? tutor.isActive : true;
 
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isEditing ? 'Edit Tutor' : 'Add New Tutor',
-              style: context.theme.typography.xl,
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: TextFormField(
-                initialValue: name,
-                onChanged: (value) => name = value,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
+    return FSheets(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.theme.colors.background,
+          borderRadius: context.theme.style.borderRadius.md,
+          border: .all(color: context.theme.colors.border),
+        ),
+        child: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: .center,
+            spacing: 16,
+            children: [
+              Text(
+                isEditing ? 'Edit Tutor' : 'Add New Tutor',
+                style: context.theme.typography.xl,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: TextFormField(
-                initialValue: email,
-                onChanged: (value) => email = value,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.emailAddress,
+              FTextFormField(
+                control: .managed(initial: TextEditingValue(text: name)),
+                hint: 'Name',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Name is required' : null,
+                onSaved: (newValue) => name = newValue!,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: TextFormField(
-                initialValue: phone,
-                onChanged: (value) => phone = value,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
+              FTextFormField(
+                control: .managed(initial: TextEditingValue(text: email)),
+                hint: 'Email',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Email is required' : null,
+                onSaved: (newValue) => email = newValue!,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: TextFormField(
-                initialValue: address,
-                onChanged: (value) => address = value,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
-                ),
+              FTextFormField(
+                control: .managed(initial: TextEditingValue(text: phone)),
+                hint: 'Phone',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Phone is required' : null,
+                onSaved: (newValue) => phone = newValue!,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: DropdownButtonFormField<GenderEnum>(
-                value: gender,
-                decoration: const InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(),
-                ),
-                items: GenderEnum.values.map((g) {
-                  return DropdownMenuItem(value: g, child: Text(g.displayName));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    gender = value!;
-                  });
-                },
+              FTextFormField(
+                control: .managed(initial: TextEditingValue(text: address)),
+                hint: 'Address',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Address is required' : null,
+                onSaved: (newValue) => address = newValue!,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: DropdownButtonFormField<bool>(
-                value: isActive,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: true, child: Text('Active')),
-                  DropdownMenuItem(value: false, child: Text('Inactive')),
+              FSelect<GenderEnum>.rich(
+                control: .managed(initial: gender),
+                hint: 'Select gender',
+                format: (g) => g.displayName,
+                children: GenderEnum.values
+                    .map(
+                      (g) => FSelectItem.item(
+                        title: Text(g.displayName),
+                        value: g,
+                      ),
+                    )
+                    .toList(),
+                validator: (value) => value == null ? 'Select gender' : null,
+                onSaved: (newValue) => gender = newValue!,
+              ),
+              FSelect<bool>.rich(
+                control: .managed(initial: isActive),
+                hint: 'Select status',
+                format: (s) => s ? 'Active' : 'Inactive',
+                children: [
+                  FSelectItem.item(title: const Text('Active'), value: true),
+                  FSelectItem.item(title: const Text('Inactive'), value: false),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    isActive = value!;
-                  });
-                },
+                validator: (value) => value == null ? 'Select status' : null,
+                onSaved: (newValue) => isActive = newValue!,
               ),
-            ),
 
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: FButton(
-                    onPress: () {
-                      Navigator.of(context).pop();
-                    },
-                    variant: .outline,
-                    child: const Text('Cancel'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: FButton(
+                      onPress: () => controller.hide(),
+                      variant: .outline,
+                      child: const Text('Cancel'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FButton(
-                    onPress: () {
-                      final updatedTutor = isEditing
-                          ? tutor!.copyWith(
-                              name: name.trim(),
-                              email: email.trim(),
-                              phone: phone.trim(),
-                              address: address.trim(),
-                              gender: gender,
-                              isActive: isActive,
-                            )
-                          : Tutor(
-                              id: '',
-                              name: name.trim(),
-                              email: email.trim(),
-                              phone: phone.trim(),
-                              address: address.trim(),
-                              gender: gender,
-                              isActive: isActive,
-                            );
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FButton(
+                      onPress: () {
+                        if (!formKey.currentState!.validate()) return;
+                        formKey.currentState!.save();
 
-                      if (isEditing) {
-                        context.read<TutorBloc>().add(
-                          UpdateTutor(updatedTutor.id, updatedTutor),
-                        );
-                      } else {
-                        context.read<TutorBloc>().add(
-                          CreateTutor(updatedTutor),
-                        );
-                      }
+                        final updatedTutor = isEditing
+                            ? tutor.copyWith(
+                                name: name.trim(),
+                                email: email.trim(),
+                                phone: phone.trim(),
+                                address: address.trim(),
+                                gender: gender,
+                                isActive: isActive,
+                              )
+                            : Tutor(
+                                id: '',
+                                name: name.trim(),
+                                email: email.trim(),
+                                phone: phone.trim(),
+                                address: address.trim(),
+                                gender: gender,
+                                isActive: isActive,
+                              );
 
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(isEditing ? 'Update' : 'Add'),
+                        if (isEditing) {
+                          context.read<TutorBloc>().add(
+                            UpdateTutor(updatedTutor.id, updatedTutor),
+                          );
+                        } else {
+                          context.read<TutorBloc>().add(
+                            CreateTutor(updatedTutor),
+                          );
+                        }
+
+                        controller.hide();
+                      },
+                      child: Text(isEditing ? 'Update' : 'Add'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _deleteTutor(Tutor tutor) {
-    showDialog(
+    showFDialog(
       context: context,
-      builder: (context) => FDialog(
+      builder: (context, style, animation) => FDialog(
         title: const Text('Delete Tutor'),
         body: Text('Are you sure you want to delete "${tutor.name}"?'),
         actions: [
           FButton(
-            onPress: () => Navigator.of(context).pop(),
+            onPress: () => context.pop(),
             variant: .outline,
             child: const Text('Cancel'),
           ),
           FButton(
             onPress: () {
               context.read<TutorBloc>().add(DeleteTutor(tutor.id));
-              Navigator.of(context).pop();
+              context.pop();
             },
             variant: .destructive,
             child: const Text('Delete'),
@@ -331,26 +334,31 @@ class _TutorsPageState extends State<TutorsPage> {
   }
 
   void _showTutorDetails(Tutor tutor) {
-    showDialog(
+    showFDialog(
       context: context,
-      builder: (context) => FDialog(
-        title: Text(tutor.name),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context, style, animation) => FDialog(
+        title: Text('Detail Tutor'),
+        body: FItemGroup(
+          style: const .delta(spacing: 4),
+          intrinsicWidth: null,
+          divider: .full,
           children: [
-            Text('Email: ${tutor.email}'),
-            Text('Phone: ${tutor.phone}'),
-            Text('Address: ${tutor.address}'),
-            Text('Gender: ${tutor.gender.displayName}'),
-            Text('Status: ${tutor.isActive ? 'Active' : 'Inactive'}'),
+            .item(title: const Text('Name'), details: Text(tutor.name)),
+            .item(title: const Text('Email'), details: Text(tutor.email)),
+            .item(title: const Text('Phone'), details: Text(tutor.phone)),
+            .item(title: const Text('Address'), details: Text(tutor.address)),
+            .item(
+              title: const Text('Gender'),
+              details: Text(tutor.gender.displayName),
+            ),
+            .item(
+              title: const Text('Status'),
+              details: Text(tutor.isActive ? 'Active' : 'Inactive'),
+            ),
           ],
         ),
         actions: [
-          FButton(
-            onPress: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
+          FButton(onPress: () => context.pop(), child: const Text('Close')),
         ],
       ),
     );

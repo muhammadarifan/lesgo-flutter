@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../blocs/student_bloc.dart';
 import '../models/student.dart';
 import '../enums/gender_enum.dart';
@@ -26,9 +27,13 @@ class _StudentsPageState extends State<StudentsPage> {
     return BlocConsumer<StudentBloc, StudentState>(
       listener: (context, state) {
         if (state is StudentError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          showFToast(
+            context: context,
+            variant: .destructive,
+            icon: Icon(FIcons.circleX),
+            title: Text('Error'),
+            description: Text(state.message),
+          );
         }
       },
       builder: (context, state) {
@@ -51,30 +56,30 @@ class _StudentsPageState extends State<StudentsPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Material(
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'Search students...',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
+                        child: FTextField(
+                          prefixBuilder: (context, style, variants) => Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 8.0,
                             ),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                              });
-                            },
+                            child: const Icon(FIcons.search),
                           ),
+                          onSubmit: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
                       FButton(
-                        onPress: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) => _buildStudentForm(),
-                          );
-                        },
+                        onPress: () => showFPersistentSheet(
+                          context: context,
+                          style: const .delta(flingVelocity: 700),
+                          side: .rtl,
+                          builder: (context, controller) =>
+                              _buildStudentForm(controller: controller),
+                        ),
                         suffix: const Icon(Icons.add),
                         child: const Text('Add Student'),
                       ),
@@ -108,21 +113,37 @@ class _StudentsPageState extends State<StudentsPage> {
         return FItem(
           prefix: FAvatar.raw(child: Text(student.name[0].toUpperCase())),
           title: Text(student.name),
-          subtitle: Text(
-            '${student.gender.displayName} • ${student.isActive ? 'Active' : 'Inactive'}',
-          ),
+          subtitle: Text(student.gender.displayName),
           suffix: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: .min,
+            spacing: 8,
             children: [
-              FButton(
-                child: Icon(Icons.edit),
-                onPress: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => _buildStudentForm(student),
+              FSwitch(
+                value: student.isActive,
+                onChange: (value) {
+                  context.read<StudentBloc>().add(
+                    UpdateStudent(
+                      student.id,
+                      student.copyWith(isActive: value),
+                    ),
                   );
                 },
+              ),
+              FButton(
+                child: Icon(FIcons.eye),
+                onPress: () => _showStudentDetails(student),
+              ),
+              FButton(
+                child: Icon(FIcons.pencil),
+                onPress: () => showFPersistentSheet(
+                  context: context,
+                  style: const .delta(flingVelocity: 700),
+                  side: .rtl,
+                  builder: (context, controller) => _buildStudentForm(
+                    controller: controller,
+                    student: student,
+                  ),
+                ),
               ),
               FButton(
                 child: Icon(Icons.delete),
@@ -130,145 +151,147 @@ class _StudentsPageState extends State<StudentsPage> {
               ),
             ],
           ),
-          onPress: () => _showStudentDetails(student),
         );
       },
       count: students.length,
     );
   }
 
-  Widget _buildStudentForm([Student? student]) {
+  Widget _buildStudentForm({
+    Student? student,
+    required FPersistentSheetController controller,
+  }) {
     final isEditing = student != null;
-    String name = isEditing ? student!.name : '';
-    GenderEnum gender = isEditing ? student!.gender : GenderEnum.male;
-    bool isActive = isEditing ? student!.isActive : true;
+    final formKey = GlobalKey<FormState>();
+    String name = isEditing ? student.name : '';
+    GenderEnum gender = isEditing ? student.gender : GenderEnum.male;
+    bool isActive = isEditing ? student.isActive : true;
 
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isEditing ? 'Edit Student' : 'Add New Student',
-              style: context.theme.typography.xl,
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: TextFormField(
-                initialValue: name,
-                onChanged: (value) => name = value,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
+    return FSheets(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.theme.colors.background,
+          borderRadius: context.theme.style.borderRadius.md,
+          border: .all(color: context.theme.colors.border),
+        ),
+        child: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: .center,
+            spacing: 16,
+            children: [
+              Text(
+                isEditing ? 'Edit Student' : 'Add New Student',
+                style: context.theme.typography.xl,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: DropdownButtonFormField<GenderEnum>(
-                value: gender,
-                decoration: const InputDecoration(
-                  labelText: 'Gender',
-                  border: OutlineInputBorder(),
-                ),
-                items: GenderEnum.values.map((g) {
-                  return DropdownMenuItem(value: g, child: Text(g.displayName));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    gender = value!;
-                  });
-                },
+              FTextFormField(
+                control: .managed(initial: TextEditingValue(text: name)),
+                hint: 'Name',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Name is required' : null,
+                onSaved: (newValue) => name = newValue!,
               ),
-            ),
-            const SizedBox(height: 16),
-            Material(
-              child: DropdownButtonFormField<bool>(
-                value: isActive,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: true, child: Text('Active')),
-                  DropdownMenuItem(value: false, child: Text('Inactive')),
+              FSelect<GenderEnum>.rich(
+                control: .managed(initial: gender),
+                hint: 'Select gender',
+                format: (g) => g.displayName,
+                children: GenderEnum.values
+                    .map(
+                      (g) => FSelectItem.item(
+                        title: Text(g.displayName),
+                        value: g,
+                      ),
+                    )
+                    .toList(),
+                validator: (value) => value == null ? 'Select gender' : null,
+                onSaved: (newValue) => gender = newValue!,
+              ),
+              FSelect<bool>.rich(
+                control: .managed(initial: isActive),
+                hint: 'Select status',
+                format: (s) => s ? 'Active' : 'Inactive',
+                children: [
+                  FSelectItem.item(title: const Text('Active'), value: true),
+                  FSelectItem.item(title: const Text('Inactive'), value: false),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    isActive = value!;
-                  });
-                },
+                validator: (value) => value == null ? 'Select status' : null,
+                onSaved: (newValue) => isActive = newValue!,
               ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: FButton(
-                    onPress: () {
-                      Navigator.of(context).pop();
-                    },
-                    variant: .outline,
-                    child: const Text('Cancel'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: FButton(
+                      onPress: () {
+                        controller.hide();
+                      },
+                      variant: .outline,
+                      child: const Text('Cancel'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FButton(
-                    onPress: () {
-                      final updatedStudent = isEditing
-                          ? student!.copyWith(
-                              name: name.trim(),
-                              gender: gender,
-                              isActive: isActive,
-                            )
-                          : Student(
-                              id: '',
-                              name: name.trim(),
-                              gender: gender,
-                              isActive: isActive,
-                            );
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FButton(
+                      onPress: () {
+                        if (!formKey.currentState!.validate()) return;
 
-                      if (isEditing) {
-                        context.read<StudentBloc>().add(
-                          UpdateStudent(updatedStudent.id, updatedStudent),
-                        );
-                      } else {
-                        context.read<StudentBloc>().add(
-                          CreateStudent(updatedStudent),
-                        );
-                      }
+                        formKey.currentState!.save();
 
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(isEditing ? 'Update' : 'Add'),
+                        final updatedStudent = isEditing
+                            ? student.copyWith(
+                                name: name.trim(),
+                                gender: gender,
+                                isActive: isActive,
+                              )
+                            : Student(
+                                id: '',
+                                name: name.trim(),
+                                gender: gender,
+                                isActive: isActive,
+                              );
+
+                        if (isEditing) {
+                          context.read<StudentBloc>().add(
+                            UpdateStudent(updatedStudent.id, updatedStudent),
+                          );
+                        } else {
+                          context.read<StudentBloc>().add(
+                            CreateStudent(updatedStudent),
+                          );
+                        }
+
+                        controller.hide();
+                      },
+                      child: Text(isEditing ? 'Update' : 'Add'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _deleteStudent(Student student) {
-    showDialog(
+    showFDialog(
       context: context,
-      builder: (context) => FDialog(
+      builder: (context, style, animation) => FDialog(
         title: const Text('Delete Student'),
         body: Text('Are you sure you want to delete "${student.name}"?'),
         actions: [
           FButton(
-            onPress: () => Navigator.of(context).pop(),
+            onPress: () => context.pop(),
             variant: .outline,
             child: const Text('Cancel'),
           ),
           FButton(
             onPress: () {
               context.read<StudentBloc>().add(DeleteStudent(student.id));
-              Navigator.of(context).pop();
+              context.pop();
             },
             variant: .destructive,
             child: const Text('Delete'),
@@ -279,23 +302,28 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   void _showStudentDetails(Student student) {
-    showDialog(
+    showFDialog(
       context: context,
-      builder: (context) => FDialog(
-        title: Text(student.name),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context, style, animation) => FDialog(
+        title: Text('Detail Student'),
+        body: FItemGroup(
+          style: const .delta(spacing: 4),
+          intrinsicWidth: null,
+          divider: .full,
           children: [
-            Text('Gender: ${student.gender.displayName}'),
-            Text('Status: ${student.isActive ? 'Active' : 'Inactive'}'),
+            .item(title: const Text('Name'), details: Text(student.name)),
+            .item(
+              title: const Text('Gender'),
+              details: Text(student.gender.displayName),
+            ),
+            .item(
+              title: const Text('Status'),
+              details: Text(student.isActive ? 'Active' : 'Inactive'),
+            ),
           ],
         ),
         actions: [
-          FButton(
-            onPress: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
+          FButton(onPress: () => context.pop(), child: const Text('Close')),
         ],
       ),
     );
