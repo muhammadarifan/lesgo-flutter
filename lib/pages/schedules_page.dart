@@ -442,17 +442,15 @@ class _SchedulesPageState extends State<SchedulesPage> {
                         formKey.currentState!.save();
 
                         // Combine date and time into ISO strings
-                        final dateString = date != null
-                            ? DateFormat('yyyy-MM-dd').format(date)
-                            : '';
-                        final startTimeString = startTime != null
-                            ? DateFormat(
-                                "yyyy-MM-ddTHH:mm:ss",
-                              ).format(startTime)
-                            : '';
-                        final endTimeString = endTime != null
-                            ? DateFormat("yyyy-MM-ddTHH:mm:ss").format(endTime)
-                            : '';
+                        final dateString = DateFormat(
+                          'yyyy-MM-dd',
+                        ).format(date);
+                        final startTimeString = DateFormat(
+                          "yyyy-MM-ddTHH:mm:ss",
+                        ).format(startTime);
+                        final endTimeString = DateFormat(
+                          "yyyy-MM-ddTHH:mm:ss",
+                        ).format(endTime);
 
                         final updatedSchedule = isEditing
                             ? schedule.copyWith(

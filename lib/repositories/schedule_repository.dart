@@ -31,7 +31,7 @@ class ScheduleRepository {
             )
             .toJson()
           ..remove('id');
-    print(data.toString());
+
     final record = await pb.collection('schedules').create(body: data);
     return Schedule.fromJson(record.data);
   }
@@ -49,7 +49,6 @@ class ScheduleRepository {
             .toJson()
           ..remove('id');
 
-    print(data.toString());
     final record = await pb.collection('schedules').update(id, body: data);
     return Schedule.fromJson(record.data);
   }
