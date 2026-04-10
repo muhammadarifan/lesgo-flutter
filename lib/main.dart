@@ -6,13 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 
 import 'blocs/course_bloc.dart';
+import 'blocs/schedule_bloc.dart';
 import 'blocs/student_bloc.dart';
 import 'blocs/tutor_bloc.dart';
 import 'pages/home_page.dart';
+import 'pages/schedules_page.dart';
 import 'pages/tutors_page.dart';
 import 'pages/students_page.dart';
 import 'pages/courses_page.dart';
 import 'repositories/course_repository.dart';
+import 'repositories/schedule_repository.dart';
 import 'repositories/student_repository.dart';
 import 'repositories/tutor_repository.dart';
 import 'layouts/admin_layout.dart';
@@ -69,6 +72,14 @@ class Application extends StatelessWidget {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/schedules',
+                builder: (context, state) => const SchedulesPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/reports',
                 builder: (context, state) =>
                     const Center(child: Text('Reports page coming soon...')),
@@ -89,6 +100,7 @@ class Application extends StatelessWidget {
           BlocProvider(create: (context) => TutorBloc(TutorRepository())),
           BlocProvider(create: (context) => StudentBloc(StudentRepository())),
           BlocProvider(create: (context) => CourseBloc(CourseRepository())),
+          BlocProvider(create: (context) => ScheduleBloc(ScheduleRepository())),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, state) => MaterialApp.router(

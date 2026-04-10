@@ -40,17 +40,7 @@ class _TutorsPageState extends State<TutorsPage> {
         if (state is TutorLoading) {
           return const Center(child: FCircularProgress());
         } else if (state is TutorsLoaded) {
-          final filteredTutors = state.tutors.where((tutor) {
-            return tutor.name.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
-                ) ||
-                tutor.email.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
-                ) ||
-                tutor.address.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
-                );
-          }).toList();
+          final filteredTutors = _filter(state.tutors);
 
           return FScaffold(
             child: Padding(
@@ -106,6 +96,19 @@ class _TutorsPageState extends State<TutorsPage> {
         }
       },
     );
+  }
+
+  List<Tutor> _filter(List<Tutor> tutors) {
+    final filteredSchedules = tutors.where((tutor) {
+      return [
+        tutor.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+        tutor.email.toLowerCase().contains(_searchQuery.toLowerCase()),
+        tutor.phone.toLowerCase().contains(_searchQuery.toLowerCase()),
+        tutor.address.toLowerCase().contains(_searchQuery.toLowerCase()),
+      ].any((element) => element);
+    }).toList();
+
+    return filteredSchedules;
   }
 
   Widget _buildTutorsList(BuildContext parentContext, List<Tutor> tutors) {

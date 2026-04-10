@@ -39,11 +39,7 @@ class _CoursesPageState extends State<CoursesPage> {
         if (state is CourseLoading) {
           return const Center(child: FCircularProgress());
         } else if (state is CoursesLoaded) {
-          final filteredCourses = state.courses.where((course) {
-            return course.name.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            );
-          }).toList();
+          final filteredCourses = _filter(state.courses);
 
           return FScaffold(
             child: Padding(
@@ -99,6 +95,16 @@ class _CoursesPageState extends State<CoursesPage> {
         }
       },
     );
+  }
+
+  List<Course> _filter(List<Course> courses) {
+    final filteredSchedules = courses.where((course) {
+      return [
+        course.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+      ].any((element) => element);
+    }).toList();
+
+    return filteredSchedules;
   }
 
   Widget _buildCoursesList(List<Course> courses) {

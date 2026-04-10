@@ -40,11 +40,7 @@ class _StudentsPageState extends State<StudentsPage> {
         if (state is StudentLoading) {
           return const Center(child: FCircularProgress());
         } else if (state is StudentsLoaded) {
-          final filteredStudents = state.students.where((student) {
-            return student.name.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            );
-          }).toList();
+          final filteredStudents = _filter(state.students);
 
           return FScaffold(
             child: Padding(
@@ -100,6 +96,14 @@ class _StudentsPageState extends State<StudentsPage> {
         }
       },
     );
+  }
+
+  List<Student> _filter(List<Student> students) {
+    return students.where((student) {
+      return [
+        student.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+      ].any((element) => element);
+    }).toList();
   }
 
   Widget _buildStudentsList(List<Student> students) {

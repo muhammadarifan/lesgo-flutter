@@ -17,6 +17,8 @@ class AdminLayout extends StatelessWidget {
         return 'Students Management';
       case '/courses':
         return 'Courses Management';
+      case '/schedules':
+        return 'Schedules Management';
       case '/reports':
         return 'Reports';
       default:
@@ -106,6 +108,19 @@ class AdminLayout extends StatelessWidget {
                         ),
                         FItem(
                           prefix: Icon(
+                            Icons.schedule,
+                            color: currentRoute == '/schedules'
+                                ? context.theme.colors.primary
+                                : null,
+                          ),
+                          title: const Text('Schedules'),
+                          selected: currentRoute == '/schedules',
+                          onPress: () => currentRoute != '/schedules'
+                              ? navigationShell.goBranch(3)
+                              : null,
+                        ),
+                        FItem(
+                          prefix: Icon(
                             Icons.bar_chart,
                             color: currentRoute == '/reports'
                                 ? context.theme.colors.primary
@@ -114,7 +129,7 @@ class AdminLayout extends StatelessWidget {
                           title: const Text('Reports'),
                           selected: currentRoute == '/reports',
                           onPress: () => currentRoute != '/reports'
-                              ? navigationShell.goBranch(3)
+                              ? navigationShell.goBranch(4)
                               : null,
                         ),
                       ],
