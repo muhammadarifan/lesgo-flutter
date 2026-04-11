@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lesgo_flutter/enums/currency_enum.dart';
 import '../blocs/course_bloc.dart';
 import '../models/course.dart';
@@ -15,11 +17,20 @@ class CoursesPage extends StatefulWidget {
 
 class _CoursesPageState extends State<CoursesPage> {
   String _searchQuery = '';
+  final List<FPersistentSheetController> _controllers = [];
 
   @override
   void initState() {
     super.initState();
     context.read<CourseBloc>().add(LoadCourses());
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -130,13 +141,18 @@ class _CoursesPageState extends State<CoursesPage> {
               ),
               FButton(
                 child: Icon(FIcons.pencil),
-                onPress: () => showFPersistentSheet(
-                  context: context,
-                  style: const .delta(flingVelocity: 700),
-                  side: .rtl,
-                  builder: (context, controller) =>
-                      _buildCourseForm(controller: controller, course: course),
-                ),
+                onPress: () {
+                  final controller = showFPersistentSheet(
+                    context: context,
+                    style: const .delta(flingVelocity: 700),
+                    side: .rtl,
+                    builder: (context, controller) => _buildCourseForm(
+                      controller: controller,
+                      course: course,
+                    ),
+                  );
+                  _controllers.add(controller);
+                },
               ),
               FButton(
                 child: Icon(FIcons.trash),
@@ -248,6 +264,8 @@ class _CoursesPageState extends State<CoursesPage> {
                         final updatedCourse = isEditing
                             ? course.copyWith(
                                 name: name.trim(),
+                                price: price,
+                                currency: currency,
                                 isActive: isActive,
                               )
                             : Course(
@@ -320,7 +338,9 @@ class _CoursesPageState extends State<CoursesPage> {
             .item(title: const Text('Name'), details: Text(course.name)),
             .item(
               title: const Text('Price'),
-              details: Text('${course.currency.displayName} ${course.price}'),
+              details: Text(
+                '${course.currency.displayName} ${_formatPrice(course.price)}',
+              ),
             ),
             .item(
               title: const Text('Status'),
@@ -333,5 +353,10 @@ class _CoursesPageState extends State<CoursesPage> {
         ],
       ),
     );
+  }
+
+  String _formatPrice(int price) {
+    var formatter = NumberFormat('#,###', 'id_ID');
+    return formatter.format(price);
   }
 }
