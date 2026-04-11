@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lesgo_flutter/enums/currency_enum.dart';
 import '../blocs/course_bloc.dart';
 import '../models/course.dart';
 
@@ -157,6 +158,8 @@ class _CoursesPageState extends State<CoursesPage> {
     final isEditing = course != null;
     final formKey = GlobalKey<FormState>();
     String name = isEditing ? course.name : '';
+    int price = isEditing ? course.price : 0;
+    CurrencyEnum currency = isEditing ? course.currency : CurrencyEnum.idr;
     bool isActive = isEditing ? course.isActive : true;
 
     return FSheets(
@@ -179,15 +182,41 @@ class _CoursesPageState extends State<CoursesPage> {
               ),
               FTextFormField(
                 control: .managed(initial: TextEditingValue(text: name)),
+                label: const Text('Name'),
                 hint: 'Jhon Doe',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
                     value!.trim().isEmpty ? 'Name is required' : null,
                 onSaved: (newValue) => name = newValue!,
               ),
+              FTextFormField(
+                control: .managed(
+                  initial: TextEditingValue(text: price.toString()),
+                ),
+                label: const Text('Price'),
+                hint: '1000',
+                autovalidateMode: .onUserInteraction,
+                validator: (value) =>
+                    value!.trim().isEmpty ? 'Price is required' : null,
+                onSaved: (newValue) => price = int.parse(newValue!),
+              ),
+              FSelect<CurrencyEnum>.rich(
+                control: .managed(initial: currency),
+                label: const Text('Currency'),
+                hint: 'Select a currency',
+                format: (s) => s.displayName,
+                children: CurrencyEnum.values
+                    .map(
+                      (e) => FSelectItem(title: Text(e.displayName), value: e),
+                    )
+                    .toList(),
+                validator: (value) => value == null ? 'Select an item' : null,
+                onSaved: (newValue) => currency = newValue!,
+              ),
               FSelect<bool>.rich(
                 control: .managed(initial: isActive),
-                hint: 'Select a fruit',
+                label: const Text('Status'),
+                hint: 'Select a status',
                 format: (s) => s ? 'Active' : 'Inactive',
                 children: [
                   .item(title: const Text('Active'), value: true),
@@ -224,6 +253,8 @@ class _CoursesPageState extends State<CoursesPage> {
                             : Course(
                                 id: '',
                                 name: name.trim(),
+                                price: price,
+                                currency: currency,
                                 isActive: isActive,
                               );
 
@@ -287,6 +318,10 @@ class _CoursesPageState extends State<CoursesPage> {
           divider: .full,
           children: [
             .item(title: const Text('Name'), details: Text(course.name)),
+            .item(
+              title: const Text('Price'),
+              details: Text('${course.currency.displayName} ${course.price}'),
+            ),
             .item(
               title: const Text('Status'),
               details: Text(course.isActive ? 'Active' : 'Inactive'),

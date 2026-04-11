@@ -10,6 +10,7 @@ import 'blocs/schedule_bloc.dart';
 import 'blocs/student_bloc.dart';
 import 'blocs/tutor_bloc.dart';
 import 'pages/home_page.dart';
+import 'pages/dashboard_page.dart';
 import 'pages/schedules_page.dart';
 import 'pages/tutors_page.dart';
 import 'pages/students_page.dart';
@@ -83,6 +84,14 @@ class Application extends StatelessWidget {
                 path: '/reports',
                 builder: (context, state) =>
                     const Center(child: Text('Reports page coming soon...')),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/dashboard',
+                builder: (context, state) => const DashboardPage(),
               ),
             ],
           ),

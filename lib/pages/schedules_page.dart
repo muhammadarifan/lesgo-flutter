@@ -438,7 +438,6 @@ class _SchedulesPageState extends State<SchedulesPage> {
                     child: FButton(
                       onPress: () {
                         if (!formKey.currentState!.validate()) return;
-
                         formKey.currentState!.save();
 
                         // Combine date and time into ISO strings

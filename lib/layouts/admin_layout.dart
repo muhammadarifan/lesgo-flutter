@@ -11,6 +11,8 @@ class AdminLayout extends StatelessWidget {
 
   String _getTitleFromRoute(String path) {
     switch (path) {
+      case '/dashboard':
+        return 'Dashboard';
       case '/tutors':
         return 'Tutors Management';
       case '/students':
@@ -42,12 +44,12 @@ class AdminLayout extends StatelessWidget {
                 children: [
                   // Header
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const .all(16),
                     child: Text(
                       'Admin Panel',
                       style: context.theme.typography.xl.copyWith(
                         color: context.theme.colors.foreground,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: .bold,
                       ),
                     ),
                   ),
@@ -57,15 +59,16 @@ class AdminLayout extends StatelessWidget {
                       children: [
                         FItem(
                           prefix: Icon(
-                            Icons.home,
-                            color: currentRoute == '/'
+                            Icons.dashboard,
+                            color: currentRoute == '/dashboard'
                                 ? context.theme.colors.primary
                                 : null,
                           ),
-                          title: const Text('Home'),
-                          selected: currentRoute == '/',
-                          onPress: () =>
-                              currentRoute != '/' ? context.go('/') : null,
+                          title: const Text('Dashboard'),
+                          selected: currentRoute == '/dashboard',
+                          onPress: () => currentRoute != '/dashboard'
+                              ? navigationShell.goBranch(5)
+                              : null,
                         ),
                         FItem(
                           prefix: Icon(
@@ -147,7 +150,7 @@ class AdminLayout extends StatelessWidget {
                 children: [
                   // Top bar
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const .all(16),
                     decoration: BoxDecoration(
                       color: context.theme.colors.background,
                       border: Border(
@@ -164,7 +167,7 @@ class AdminLayout extends StatelessWidget {
                             title,
                             style: context.theme.typography.xl.copyWith(
                               color: context.theme.colors.foreground,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: .bold,
                             ),
                           ),
                         ),
@@ -179,9 +182,7 @@ class AdminLayout extends StatelessWidget {
                               onPress: () =>
                                   context.read<ThemeBloc>().add(ToggleTheme()),
                               child: Icon(
-                                state.isDark
-                                    ? Icons.light_mode
-                                    : Icons.dark_mode,
+                                state.isDark ? FIcons.sun : FIcons.moon,
                               ),
                             ),
                           ),
