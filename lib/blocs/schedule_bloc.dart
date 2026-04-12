@@ -7,6 +7,8 @@ abstract class ScheduleEvent {}
 
 class LoadSchedules extends ScheduleEvent {}
 
+class LoadScheduleCount extends ScheduleEvent {}
+
 class LoadSchedule extends ScheduleEvent {
   final String id;
   LoadSchedule(this.id);
@@ -45,6 +47,11 @@ class ScheduleLoaded extends ScheduleState {
   ScheduleLoaded(this.schedule);
 }
 
+class ScheduleCountLoaded extends ScheduleState {
+  final int count;
+  ScheduleCountLoaded(this.count);
+}
+
 class ScheduleError extends ScheduleState {
   final String message;
   ScheduleError(this.message);
@@ -56,6 +63,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
 
   ScheduleBloc(this.repository) : super(ScheduleInitial()) {
     on<LoadSchedules>(_onLoadSchedules);
+    on<LoadScheduleCount>(_onLoadScheduleCount);
     on<LoadSchedule>(_onLoadSchedule);
     on<CreateSchedule>(_onCreateSchedule);
     on<UpdateSchedule>(_onUpdateSchedule);
@@ -70,6 +78,19 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     try {
       final schedules = await repository.getAll();
       emit(SchedulesLoaded(schedules));
+    } catch (e) {
+      emit(ScheduleError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadScheduleCount(
+    LoadScheduleCount event,
+    Emitter<ScheduleState> emit,
+  ) async {
+    emit(ScheduleLoading());
+    try {
+      final count = await repository.getCount();
+      emit(ScheduleCountLoaded(count));
     } catch (e) {
       emit(ScheduleError(e.toString()));
     }

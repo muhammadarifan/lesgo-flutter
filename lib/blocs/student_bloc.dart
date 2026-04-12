@@ -7,6 +7,8 @@ abstract class StudentEvent {}
 
 class LoadStudents extends StudentEvent {}
 
+class LoadStudentCount extends StudentEvent {}
+
 class LoadStudent extends StudentEvent {
   final String id;
   LoadStudent(this.id);
@@ -45,6 +47,11 @@ class StudentLoaded extends StudentState {
   StudentLoaded(this.student);
 }
 
+class StudentCountLoaded extends StudentState {
+  final int count;
+  StudentCountLoaded(this.count);
+}
+
 class StudentError extends StudentState {
   final String message;
   StudentError(this.message);
@@ -56,6 +63,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
 
   StudentBloc(this.repository) : super(StudentInitial()) {
     on<LoadStudents>(_onLoadStudents);
+    on<LoadStudentCount>(_onLoadStudentCount);
     on<LoadStudent>(_onLoadStudent);
     on<CreateStudent>(_onCreateStudent);
     on<UpdateStudent>(_onUpdateStudent);
@@ -70,6 +78,19 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     try {
       final students = await repository.getAll();
       emit(StudentsLoaded(students));
+    } catch (e) {
+      emit(StudentError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadStudentCount(
+    LoadStudentCount event,
+    Emitter<StudentState> emit,
+  ) async {
+    emit(StudentLoading());
+    try {
+      final count = await repository.getCount();
+      emit(StudentCountLoaded(count));
     } catch (e) {
       emit(StudentError(e.toString()));
     }

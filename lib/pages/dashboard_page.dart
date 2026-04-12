@@ -5,9 +5,27 @@ import '../blocs/tutor_bloc.dart';
 import '../blocs/student_bloc.dart';
 import '../blocs/course_bloc.dart';
 import '../blocs/schedule_bloc.dart';
+import '../blocs/payment_bloc.dart';
+import '../blocs/invoice_bloc.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<TutorBloc>().add(LoadTutorCount());
+    context.read<StudentBloc>().add(LoadStudentCount());
+    context.read<CourseBloc>().add(LoadCourseCount());
+    context.read<ScheduleBloc>().add(LoadScheduleCount());
+    context.read<PaymentBloc>().add(LoadPaymentCount());
+    context.read<InvoiceBloc>().add(LoadInvoiceCount());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +44,7 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 24),
             Expanded(
               child: GridView.count(
-                crossAxisCount: 4,
+                crossAxisCount: 3,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
@@ -36,8 +54,8 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.school,
                     bloc: BlocBuilder<TutorBloc, TutorState>(
                       builder: (context, state) {
-                        final count = state is TutorsLoaded
-                            ? state.tutors.length
+                        final count = state is TutorCountLoaded
+                            ? state.count
                             : 0;
                         return Text(
                           '$count',
@@ -55,8 +73,8 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.people,
                     bloc: BlocBuilder<StudentBloc, StudentState>(
                       builder: (context, state) {
-                        final count = state is StudentsLoaded
-                            ? state.students.length
+                        final count = state is StudentCountLoaded
+                            ? state.count
                             : 0;
                         return Text(
                           '$count',
@@ -74,8 +92,8 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.book,
                     bloc: BlocBuilder<CourseBloc, CourseState>(
                       builder: (context, state) {
-                        final count = state is CoursesLoaded
-                            ? state.courses.length
+                        final count = state is CourseCountLoaded
+                            ? state.count
                             : 0;
                         return Text(
                           '$count',
@@ -93,8 +111,46 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.schedule,
                     bloc: BlocBuilder<ScheduleBloc, ScheduleState>(
                       builder: (context, state) {
-                        final count = state is SchedulesLoaded
-                            ? state.schedules.length
+                        final count = state is ScheduleCountLoaded
+                            ? state.count
+                            : 0;
+                        return Text(
+                          '$count',
+                          style: context.theme.typography.xl2.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: context.theme.colors.primary,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  _buildStatCard(
+                    context: context,
+                    title: 'Payments',
+                    icon: Icons.payment,
+                    bloc: BlocBuilder<PaymentBloc, PaymentState>(
+                      builder: (context, state) {
+                        final count = state is PaymentCountLoaded
+                            ? state.count
+                            : 0;
+                        return Text(
+                          '$count',
+                          style: context.theme.typography.xl2.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: context.theme.colors.primary,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  _buildStatCard(
+                    context: context,
+                    title: 'Invoices',
+                    icon: Icons.receipt,
+                    bloc: BlocBuilder<InvoiceBloc, InvoiceState>(
+                      builder: (context, state) {
+                        final count = state is InvoiceCountLoaded
+                            ? state.count
                             : 0;
                         return Text(
                           '$count',

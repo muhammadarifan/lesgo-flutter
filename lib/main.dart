@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 
 import 'blocs/course_bloc.dart';
+import 'blocs/invoice_bloc.dart';
+import 'blocs/payment_bloc.dart';
 import 'blocs/schedule_bloc.dart';
 import 'blocs/student_bloc.dart';
 import 'blocs/tutor_bloc.dart';
@@ -15,7 +17,11 @@ import 'pages/schedules_page.dart';
 import 'pages/tutors_page.dart';
 import 'pages/students_page.dart';
 import 'pages/courses_page.dart';
+import 'pages/invoices_page.dart';
+import 'pages/payments_page.dart';
 import 'repositories/course_repository.dart';
+import 'repositories/invoice_repository.dart';
+import 'repositories/payment_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/student_repository.dart';
 import 'repositories/tutor_repository.dart';
@@ -81,6 +87,22 @@ class Application extends StatelessWidget {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/invoices',
+                builder: (context, state) => const InvoicesPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/payments',
+                builder: (context, state) => const PaymentsPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/reports',
                 builder: (context, state) =>
                     const Center(child: Text('Reports page coming soon...')),
@@ -110,6 +132,8 @@ class Application extends StatelessWidget {
           BlocProvider(create: (context) => StudentBloc(StudentRepository())),
           BlocProvider(create: (context) => CourseBloc(CourseRepository())),
           BlocProvider(create: (context) => ScheduleBloc(ScheduleRepository())),
+          BlocProvider(create: (context) => InvoiceBloc(InvoiceRepository())),
+          BlocProvider(create: (context) => PaymentBloc(PaymentRepository())),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, state) => MaterialApp.router(
@@ -118,7 +142,6 @@ class Application extends StatelessWidget {
             localizationsDelegates: const [
               ...FLocalizations.localizationsDelegates,
             ],
-            theme: state.themeData?.toApproximateMaterialTheme(),
             builder: (_, child) => FTheme(
               data: state.themeData ?? theme,
               child: FToaster(child: FTooltipGroup(child: child!)),

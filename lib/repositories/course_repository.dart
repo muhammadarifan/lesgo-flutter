@@ -30,4 +30,9 @@ class CourseRepository {
   Future<void> delete(String id) async {
     await pb.collection('courses').delete(id);
   }
+
+  Future<int> getCount() async {
+    final result = await pb.collection('courses').getList(perPage: 0);
+    return result.totalItems;
+  }
 }

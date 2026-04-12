@@ -56,4 +56,9 @@ class ScheduleRepository {
   Future<void> delete(String id) async {
     await pb.collection('schedules').delete(id);
   }
+
+  Future<int> getCount() async {
+    final result = await pb.collection('schedules').getList(perPage: 0);
+    return result.totalItems;
+  }
 }

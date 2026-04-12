@@ -8,6 +8,8 @@ abstract class CourseEvent {}
 
 class LoadCourses extends CourseEvent {}
 
+class LoadCourseCount extends CourseEvent {}
+
 class LoadCourse extends CourseEvent {
   final String id;
   LoadCourse(this.id);
@@ -46,6 +48,11 @@ class CourseLoaded extends CourseState {
   CourseLoaded(this.course);
 }
 
+class CourseCountLoaded extends CourseState {
+  final int count;
+  CourseCountLoaded(this.count);
+}
+
 class CourseError extends CourseState {
   final String message;
   CourseError(this.message);
@@ -57,6 +64,7 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
 
   CourseBloc(this.repository) : super(CourseInitial()) {
     on<LoadCourses>(_onLoadCourses);
+    on<LoadCourseCount>(_onLoadCourseCount);
     on<LoadCourse>(_onLoadCourse);
     on<CreateCourse>(_onCreateCourse);
     on<UpdateCourse>(_onUpdateCourse);
@@ -73,6 +81,19 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
       emit(CoursesLoaded(courses));
     } catch (e, s) {
       debugPrint('$e\n$s');
+      emit(CourseError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadCourseCount(
+    LoadCourseCount event,
+    Emitter<CourseState> emit,
+  ) async {
+    emit(CourseLoading());
+    try {
+      final count = await repository.getCount();
+      emit(CourseCountLoaded(count));
+    } catch (e) {
       emit(CourseError(e.toString()));
     }
   }

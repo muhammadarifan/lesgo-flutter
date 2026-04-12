@@ -49,12 +49,13 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       final sp = await SharedPreferences.getInstance();
       final isDark = sp.getBool('THEME_IS_DARK') ?? false;
 
-      final themeData = isDark
-          ? FThemes.neutral.light.touch
-          : FThemes.neutral.dark.touch;
+      final newIsDark = !isDark;
+      final themeData = newIsDark
+          ? FThemes.neutral.dark.touch
+          : FThemes.neutral.light.touch;
 
-      sp.setBool('THEME_IS_DARK', !isDark);
-      emit(ThemeState(isDark, themeData));
+      await sp.setBool('THEME_IS_DARK', newIsDark);
+      emit(ThemeState(newIsDark, themeData));
     } catch (e, s) {
       debugPrint('$e\n$s');
     }
