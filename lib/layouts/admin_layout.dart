@@ -83,204 +83,133 @@ class AdminLayout extends StatelessWidget {
     final currentRoute = GoRouterState.of(context).uri.path;
     final title = _getTitleFromRoute(currentRoute);
     return FScaffold(
-      child: Row(
+      sidebar: FSidebar(
+        header: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'Admin Panel',
+            style: context.theme.typography.xl.copyWith(
+              color: context.theme.colors.foreground,
+              fontWeight: .bold,
+            ),
+          ),
+        ),
+        footer: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'Version 1.0.0',
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.foreground,
+            ),
+          ),
+        ),
         children: [
-          // Sidebar
-          SizedBox(
-            width: 250,
-            child: Container(
-              decoration: BoxDecoration(color: context.theme.colors.card),
-              child: Column(
+          FSidebarItem(
+            icon: const Icon(Icons.dashboard),
+            label: const Text('Dashboard'),
+            selected: currentRoute == '/dashboard',
+            onPress: () => context.go('/dashboard'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.school),
+            label: const Text('Tutors'),
+            selected: currentRoute == '/tutors',
+            onPress: () => context.go('/tutors'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.person),
+            label: const Text('Students'),
+            selected: currentRoute == '/students',
+            onPress: () => context.go('/students'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.book),
+            label: const Text('Courses'),
+            selected: currentRoute == '/courses',
+            onPress: () => context.go('/courses'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.calendar_month),
+            label: const Text('Schedules'),
+            selected: currentRoute == '/schedules',
+            onPress: () => context.go('/schedules'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.receipt),
+            label: const Text('Invoices'),
+            selected: currentRoute == '/invoices',
+            onPress: () => context.go('/invoices'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.payment),
+            label: const Text('Payments'),
+            selected: currentRoute == '/payments',
+            onPress: () => context.go('/payments'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.bar_chart),
+            label: const Text('Reports'),
+            selected: currentRoute == '/reports',
+            onPress: () => context.go('/reports'),
+          ),
+        ],
+      ),
+      child: Container(
+        color: context.theme.colors.background,
+        child: Column(
+          children: [
+            // Top bar
+            Container(
+              padding: const .all(16),
+              decoration: BoxDecoration(
+                color: context.theme.colors.background,
+                border: Border(
+                  bottom: BorderSide(
+                    color: context.theme.colors.border,
+                    width: context.theme.style.borderWidth,
+                  ),
+                ),
+              ),
+              child: Row(
                 children: [
-                  // Header
-                  Container(
-                    padding: const .all(16),
+                  Expanded(
                     child: Text(
-                      'Admin Panel',
+                      title,
                       style: context.theme.typography.xl.copyWith(
                         color: context.theme.colors.foreground,
                         fontWeight: .bold,
                       ),
                     ),
                   ),
-                  // Navigation items
-                  Expanded(
-                    child: FItemGroup(
-                      children: [
-                        FItem(
-                          prefix: Icon(
-                            Icons.dashboard,
-                            color: currentRoute == '/dashboard'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Dashboard'),
-                          selected: currentRoute == '/dashboard',
-                          onPress: () => currentRoute != '/dashboard'
-                              ? navigationShell.goBranch(7)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.school,
-                            color: currentRoute == '/tutors'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Tutors'),
-                          selected: currentRoute == '/tutors',
-                          onPress: () => currentRoute != '/tutors'
-                              ? navigationShell.goBranch(0)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.people,
-                            color: currentRoute == '/students'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Students'),
-                          selected: currentRoute == '/students',
-                          onPress: () => currentRoute != '/students'
-                              ? navigationShell.goBranch(1)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.book,
-                            color: currentRoute == '/courses'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Courses'),
-                          selected: currentRoute == '/courses',
-                          onPress: () => currentRoute != '/courses'
-                              ? navigationShell.goBranch(2)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.schedule,
-                            color: currentRoute == '/schedules'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Schedules'),
-                          selected: currentRoute == '/schedules',
-                          onPress: () => currentRoute != '/schedules'
-                              ? navigationShell.goBranch(3)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.receipt_long,
-                            color: currentRoute == '/invoices'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Invoices'),
-                          selected: currentRoute == '/invoices',
-                          onPress: () => currentRoute != '/invoices'
-                              ? navigationShell.goBranch(4)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.payment,
-                            color: currentRoute == '/payments'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Payments'),
-                          selected: currentRoute == '/payments',
-                          onPress: () => currentRoute != '/payments'
-                              ? navigationShell.goBranch(5)
-                              : null,
-                        ),
-                        FItem(
-                          prefix: Icon(
-                            Icons.bar_chart,
-                            color: currentRoute == '/reports'
-                                ? context.theme.colors.primary
-                                : null,
-                          ),
-                          title: const Text('Reports'),
-                          selected: currentRoute == '/reports',
-                          onPress: () => currentRoute != '/reports'
-                              ? navigationShell.goBranch(6)
-                              : null,
-                        ),
-                      ],
+                  FTooltip(
+                    tipBuilder: (context, controller) => Text('Refresh'),
+                    child: FButton(
+                      onPress: () => _refreshCurrentPage(context),
+                      child: Icon(FIcons.refreshCw),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          // Main content
-          Expanded(
-            child: Container(
-              color: context.theme.colors.background,
-              child: Column(
-                children: [
-                  // Top bar
-                  Container(
-                    padding: const .all(16),
-                    decoration: BoxDecoration(
-                      color: context.theme.colors.background,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: context.theme.colors.border,
-                          width: context.theme.style.borderWidth,
-                        ),
+                  const SizedBox(width: 8),
+                  BlocBuilder<ThemeBloc, ThemeState>(
+                    builder: (context, state) => FTooltip(
+                      tipBuilder: (context, controller) => Text(
+                        state.isDark
+                            ? 'Switch to light mode'
+                            : 'Switch to dark mode',
+                      ),
+                      child: FButton(
+                        onPress: () =>
+                            context.read<ThemeBloc>().add(ToggleTheme()),
+                        child: Icon(state.isDark ? FIcons.sun : FIcons.moon),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: context.theme.typography.xl.copyWith(
-                              color: context.theme.colors.foreground,
-                              fontWeight: .bold,
-                            ),
-                          ),
-                        ),
-                        FTooltip(
-                          tipBuilder: (context, controller) => Text('Refresh'),
-                          child: FButton(
-                            onPress: () => _refreshCurrentPage(context),
-                            child: Icon(FIcons.refreshCw),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        BlocBuilder<ThemeBloc, ThemeState>(
-                          builder: (context, state) => FTooltip(
-                            tipBuilder: (context, controller) => Text(
-                              state.isDark
-                                  ? 'Switch to light mode'
-                                  : 'Switch to dark mode',
-                            ),
-                            child: FButton(
-                              onPress: () =>
-                                  context.read<ThemeBloc>().add(ToggleTheme()),
-                              child: Icon(
-                                state.isDark ? FIcons.sun : FIcons.moon,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                  // Content
-                  Expanded(child: navigationShell),
                 ],
               ),
             ),
-          ),
-        ],
+            // Content
+            Expanded(child: navigationShell),
+          ],
+        ),
       ),
     );
   }
