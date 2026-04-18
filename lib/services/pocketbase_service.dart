@@ -10,6 +10,6 @@ class PocketBaseService {
   }
 
   PocketBaseService._internal() {
-    pb = PocketBase('https://lesgo-pb.arifslab.web.id');
+    pb = PocketBase('http://127.0.0.1:8090');
   }
 }

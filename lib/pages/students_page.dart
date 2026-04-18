@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:html' as html;
 import '../blocs/student_bloc.dart';
 import '../models/student.dart';
 import '../enums/gender_enum.dart';
+import '../helpers/excel_helper.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -78,6 +81,12 @@ class _StudentsPageState extends State<StudentsPage> {
                         ),
                         suffix: const Icon(Icons.add),
                         child: const Text('Add Student'),
+                      ),
+                      const SizedBox(width: 16),
+                      FButton(
+                        onPress: () => _showImportSheet(),
+                        suffix: const Icon(Icons.upload_file),
+                        child: const Text('Import Excel'),
                       ),
                     ],
                   ),
@@ -329,6 +338,68 @@ class _StudentsPageState extends State<StudentsPage> {
         actions: [
           FButton(onPress: () => context.pop(), child: const Text('Close')),
         ],
+      ),
+    );
+  }
+
+  void _showImportSheet() {
+    showFPersistentSheet(
+      context: context,
+      style: const .delta(flingVelocity: 700),
+      side: .rtl,
+      builder: (context, controller) => FSheets(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.theme.colors.background,
+            borderRadius: context.theme.style.borderRadius.md,
+            border: Border.all(color: context.theme.colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 16,
+            children: [
+              Text(
+                'Import Students from Excel',
+                style: context.theme.typography.xl,
+              ),
+              FButton(
+                onPress: () {
+                  // Download example file
+                  final bytes = ExcelHelper.generateExampleFile();
+                  final blob = html.Blob([bytes]);
+                  final url = html.Url.createObjectUrlFromBlob(blob);
+                  final _ = html.AnchorElement(href: url)
+                    ..setAttribute('download', 'students_example.xlsx')
+                    ..click();
+                  html.Url.revokeObjectUrl(url);
+                  controller.hide();
+                },
+                child: const Text('Download Example File'),
+              ),
+              FButton(
+                onPress: () async {
+                  // Import file
+                  final result = await FilePicker.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['xlsx'],
+                    withData: true,
+                  );
+                  if (result != null &&
+                      result.files.isNotEmpty &&
+                      result.files.first.bytes != null) {
+                    final bytes = result.files.first.bytes!;
+                    final data = ExcelHelper.convertFromBytes(bytes);
+                    debugPrint('Imported data: $data');
+                    // TODO: Process the data, e.g., create students
+                  }
+                  controller.hide();
+                },
+                child: const Text('Import File'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
