@@ -1,43 +1,55 @@
+import 'package:get_it/get_it.dart';
 import 'package:lesgo_flutter/models/student.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class StudentRepository {
-  final PocketBase pb = PocketBaseService().pb;
+  final PocketBaseService _pbService = GetIt.instance<PocketBaseService>();
+
+  Future<PocketBase> get pb async => _pbService.pb;
 
   Future<List<Student>> getAll() async {
-    final records = await pb.collection('students').getFullList();
+    final pbInstance = await pb;
+    final records = await pbInstance.collection('students').getFullList();
     return records.map((record) => Student.fromJson(record.toJson())).toList();
   }
 
   Future<Student> getById(String id) async {
-    final record = await pb.collection('students').getOne(id);
+    final pbInstance = await pb;
+    final record = await pbInstance.collection('students').getOne(id);
     return Student.fromJson(record.data);
   }
 
   Future<Student> create(Student student) async {
+    final pbInstance = await pb;
     final data = student.toJson()..remove('id');
-    final record = await pb.collection('students').create(body: data);
+    final record = await pbInstance.collection('students').create(body: data);
     return Student.fromJson(record.data);
   }
 
   Future<Student> update(String id, Student student) async {
+    final pbInstance = await pb;
     final data = student.toJson()..remove('id');
-    final record = await pb.collection('students').update(id, body: data);
+    final record = await pbInstance
+        .collection('students')
+        .update(id, body: data);
     return Student.fromJson(record.data);
   }
 
   Future<void> delete(String id) async {
-    await pb.collection('students').delete(id);
+    final pbInstance = await pb;
+    await pbInstance.collection('students').delete(id);
   }
 
   Future<int> getCount() async {
-    final result = await pb.collection('students').getList(perPage: 0);
+    final pbInstance = await pb;
+    final result = await pbInstance.collection('students').getList(perPage: 0);
     return result.totalItems;
   }
 
   Future<List<Student>> createBatch(List<Student> students) async {
-    final batch = pb.createBatch();
+    final pbInstance = await pb;
+    final batch = pbInstance.createBatch();
     for (final student in students) {
       final data = student.toJson()..remove('id');
       batch.collection('students').create(body: data);
@@ -47,7 +59,8 @@ class StudentRepository {
   }
 
   Future<void> deleteBatch(List<String> ids) async {
-    final batch = pb.createBatch();
+    final pbInstance = await pb;
+    final batch = pbInstance.createBatch();
     for (final id in ids) {
       batch.collection('students').delete(id);
     }

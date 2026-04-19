@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:universal_html/html.dart' as html;
 import '../blocs/student_bloc.dart';
 import '../models/student.dart';
 import '../enums/gender_enum.dart';
@@ -364,15 +368,25 @@ class _StudentsPageState extends State<StudentsPage> {
                 style: context.theme.typography.xl,
               ),
               FButton(
-                onPress: () {
+                onPress: () async {
                   // Download example file
                   final bytes = ExcelHelper.generateExampleFile();
-                  final blob = html.Blob([bytes]);
-                  final url = html.Url.createObjectUrlFromBlob(blob);
-                  final _ = html.AnchorElement(href: url)
-                    ..setAttribute('download', 'students_example.xlsx')
-                    ..click();
-                  html.Url.revokeObjectUrl(url);
+                  if (kIsWeb) {
+                    final blob = html.Blob([bytes]);
+                    final url = html.Url.createObjectUrlFromBlob(blob);
+                    final anchor = html.AnchorElement(href: url)
+                      ..setAttribute('download', 'students_example.xlsx')
+                      ..click();
+                    html.Url.revokeObjectUrl(url);
+                  } else {
+                    // For mobile, save to temp and share
+                    final tempDir = await getTemporaryDirectory();
+                    final file = File('${tempDir.path}/students_example.xlsx');
+                    await file.writeAsBytes(bytes);
+                    await Share.shareXFiles([
+                      XFile(file.path),
+                    ], text: 'Students example file');
+                  }
                   controller.hide();
                 },
                 child: const Text('Download Example File'),

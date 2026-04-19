@@ -1,15 +1,15 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PocketBaseService {
-  static final PocketBaseService _instance = PocketBaseService._internal();
+  late final PocketBase pb;
 
-  late PocketBase pb;
-
-  factory PocketBaseService() {
-    return _instance;
-  }
-
-  PocketBaseService._internal() {
-    pb = PocketBase('http://127.0.0.1:8090');
+  Future<void> init() async {
+    final storage = FlutterSecureStorage(aOptions: AndroidOptions());
+    final store = AsyncAuthStore(
+      save: (String data) async => storage.write(key: 'pb_auth', value: data),
+      initial: await storage.read(key: 'pb_auth'),
+    );
+    pb = PocketBase('http://127.0.0.1:8090', authStore: store);
   }
 }

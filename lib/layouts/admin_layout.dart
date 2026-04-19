@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/blocs/theme_bloc.dart';
+import 'package:lesgo_flutter/blocs/auth_bloc.dart';
 import 'package:lesgo_flutter/blocs/course_bloc.dart';
 import 'package:lesgo_flutter/blocs/schedule_bloc.dart';
 import 'package:lesgo_flutter/blocs/tutor_bloc.dart';
@@ -201,6 +202,14 @@ class AdminLayout extends StatelessWidget {
                             context.read<ThemeBloc>().add(ToggleTheme()),
                         child: Icon(state.isDark ? FIcons.sun : FIcons.moon),
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FTooltip(
+                    tipBuilder: (context, controller) => Text('Logout'),
+                    child: FButton(
+                      onPress: () => context.read<AuthBloc>().add(Logout()),
+                      child: const Icon(Icons.logout),
                     ),
                   ),
                 ],

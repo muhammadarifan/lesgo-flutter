@@ -47,6 +47,9 @@ dependencies:
   excel_community: ^1.0.8
   path_provider: ^2.1.5
   share_plus: ^12.0.2
+  flutter_secure_storage: ^10.0.0
+  get_it: ^9.2.1
+  universal_html: ^2.3.0
 
 dev_dependencies:
   flutter_test:

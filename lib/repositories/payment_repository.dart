@@ -1,22 +1,27 @@
 import 'dart:typed_data';
 
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' show MultipartFile;
 import 'package:lesgo_flutter/models/payment.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PaymentRepository {
-  final PocketBase pb = PocketBaseService().pb;
+  final PocketBaseService _pbService = GetIt.instance<PocketBaseService>();
+
+  Future<PocketBase> get pb async => _pbService.pb;
 
   Future<List<Payment>> getAll() async {
-    final records = await pb
+    final pbInstance = await pb;
+    final records = await pbInstance
         .collection('payments')
         .getFullList(expand: 'invoice');
     return records.map((record) => Payment.fromJson(record.toJson())).toList();
   }
 
   Future<Payment> getById(String id) async {
-    final record = await pb
+    final pbInstance = await pb;
+    final record = await pbInstance
         .collection('payments')
         .getOne(id, expand: 'invoice');
     return Payment.fromJson(record.data);
@@ -44,7 +49,8 @@ class PaymentRepository {
       ];
     }
 
-    final record = await pb
+    final pbInstance = await pb;
+    final record = await pbInstance
         .collection('payments')
         .create(body: data, files: files ?? []);
     return Payment.fromJson(record.data);
@@ -73,18 +79,21 @@ class PaymentRepository {
       ];
     }
 
-    final record = await pb
+    final pbInstance = await pb;
+    final record = await pbInstance
         .collection('payments')
         .update(id, body: data, files: files ?? []);
     return Payment.fromJson(record.data);
   }
 
   Future<void> delete(String id) async {
-    await pb.collection('payments').delete(id);
+    final pbInstance = await pb;
+    await pbInstance.collection('payments').delete(id);
   }
 
   Future<int> getCount() async {
-    final result = await pb.collection('payments').getList(perPage: 0);
+    final pbInstance = await pb;
+    final result = await pbInstance.collection('payments').getList(perPage: 0);
     return result.totalItems;
   }
 }

@@ -1,19 +1,24 @@
+import 'package:get_it/get_it.dart';
 import 'package:lesgo_flutter/models/schedule.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ScheduleRepository {
-  final PocketBase pb = PocketBaseService().pb;
+  final PocketBaseService _pbService = GetIt.instance<PocketBaseService>();
+
+  Future<PocketBase> get pb async => _pbService.pb;
 
   Future<List<Schedule>> getAll() async {
-    final records = await pb
+    final pbInstance = await pb;
+    final records = await pbInstance
         .collection('schedules')
         .getFullList(expand: 'tutor,students,course');
     return records.map((record) => Schedule.fromJson(record.toJson())).toList();
   }
 
   Future<Schedule> getById(String id) async {
-    final record = await pb
+    final pbInstance = await pb;
+    final record = await pbInstance
         .collection('schedules')
         .getOne(id, expand: 'tutor,students,course');
     return Schedule.fromJson(record.data);
@@ -32,7 +37,8 @@ class ScheduleRepository {
             .toJson()
           ..remove('id');
 
-    final record = await pb.collection('schedules').create(body: data);
+    final pbInstance = await pb;
+    final record = await pbInstance.collection('schedules').create(body: data);
     return Schedule.fromJson(record.data);
   }
 
@@ -49,16 +55,21 @@ class ScheduleRepository {
             .toJson()
           ..remove('id');
 
-    final record = await pb.collection('schedules').update(id, body: data);
+    final pbInstance = await pb;
+    final record = await pbInstance
+        .collection('schedules')
+        .update(id, body: data);
     return Schedule.fromJson(record.data);
   }
 
   Future<void> delete(String id) async {
-    await pb.collection('schedules').delete(id);
+    final pbInstance = await pb;
+    await pbInstance.collection('schedules').delete(id);
   }
 
   Future<int> getCount() async {
-    final result = await pb.collection('schedules').getList(perPage: 0);
+    final pbInstance = await pb;
+    final result = await pbInstance.collection('schedules').getList(perPage: 0);
     return result.totalItems;
   }
 }
