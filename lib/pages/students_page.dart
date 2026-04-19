@@ -390,8 +390,14 @@ class _StudentsPageState extends State<StudentsPage> {
                       result.files.first.bytes != null) {
                     final bytes = result.files.first.bytes!;
                     final data = ExcelHelper.convertFromBytes(bytes);
-                    debugPrint('Imported data: $data');
-                    // TODO: Process the data, e.g., create students
+                    final studentList = data
+                        .map((e) => Student.fromJson(e))
+                        .toList();
+                    if (context.mounted) {
+                      context.read<StudentBloc>().add(
+                        CreateStudentsBatch(studentList),
+                      );
+                    }
                   }
                   controller.hide();
                 },

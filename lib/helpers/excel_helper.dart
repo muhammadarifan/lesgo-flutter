@@ -1,6 +1,5 @@
 import 'package:excel_community/excel_community.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io';
 
 class ExcelHelper {
   static List<Map<String, dynamic>> convertFromBytes(Uint8List bytes) {
@@ -20,7 +19,20 @@ class ExcelHelper {
     for (var row in dataRows) {
       var map = <String, dynamic>{};
       for (var i = 0; i < headers.length && i < row.length; i++) {
-        map[headers[i]] = row[i]?.value;
+        // check if row[i]?.value is bool, int, double, String
+        final boolValue = bool.tryParse(row[i]?.value.toString() ?? '');
+        final intValue = int.tryParse(row[i]?.value.toString() ?? '');
+        final doubleValue = double.tryParse(row[i]?.value.toString() ?? '');
+
+        if (boolValue != null) {
+          map[headers[i]] = boolValue;
+        } else if (intValue != null) {
+          map[headers[i]] = intValue;
+        } else if (doubleValue != null) {
+          map[headers[i]] = doubleValue;
+        } else {
+          map[headers[i]] = row[i]?.value.toString() ?? '';
+        }
       }
       list.add(map);
     }
@@ -44,7 +56,7 @@ class ExcelHelper {
 
     // Example row
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).value =
-        TextCellValue('1');
+        TextCellValue('abc');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1)).value =
         TextCellValue('John Doe');
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 1)).value =

@@ -35,4 +35,22 @@ class StudentRepository {
     final result = await pb.collection('students').getList(perPage: 0);
     return result.totalItems;
   }
+
+  Future<List<Student>> createBatch(List<Student> students) async {
+    final batch = pb.createBatch();
+    for (final student in students) {
+      final data = student.toJson()..remove('id');
+      batch.collection('students').create(body: data);
+    }
+    final results = await batch.send();
+    return results.map((result) => Student.fromJson(result.body)).toList();
+  }
+
+  Future<void> deleteBatch(List<String> ids) async {
+    final batch = pb.createBatch();
+    for (final id in ids) {
+      batch.collection('students').delete(id);
+    }
+    await batch.send();
+  }
 }

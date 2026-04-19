@@ -30,6 +30,16 @@ class DeleteStudent extends StudentEvent {
   DeleteStudent(this.id);
 }
 
+class CreateStudentsBatch extends StudentEvent {
+  final List<Student> students;
+  CreateStudentsBatch(this.students);
+}
+
+class DeleteStudentsBatch extends StudentEvent {
+  final List<String> ids;
+  DeleteStudentsBatch(this.ids);
+}
+
 // States
 abstract class StudentState {}
 
@@ -57,6 +67,13 @@ class StudentError extends StudentState {
   StudentError(this.message);
 }
 
+class StudentsBatchCreated extends StudentState {
+  final List<Student> students;
+  StudentsBatchCreated(this.students);
+}
+
+class StudentsBatchDeleted extends StudentState {}
+
 // Bloc
 class StudentBloc extends Bloc<StudentEvent, StudentState> {
   final StudentRepository repository;
@@ -68,6 +85,8 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     on<CreateStudent>(_onCreateStudent);
     on<UpdateStudent>(_onUpdateStudent);
     on<DeleteStudent>(_onDeleteStudent);
+    on<CreateStudentsBatch>(_onCreateStudentsBatch);
+    on<DeleteStudentsBatch>(_onDeleteStudentsBatch);
   }
 
   Future<void> _onLoadStudents(
@@ -144,6 +163,34 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
     emit(StudentLoading());
     try {
       await repository.delete(event.id);
+      add(LoadStudents());
+    } catch (e) {
+      emit(StudentError(e.toString()));
+    }
+  }
+
+  Future<void> _onCreateStudentsBatch(
+    CreateStudentsBatch event,
+    Emitter<StudentState> emit,
+  ) async {
+    emit(StudentLoading());
+    try {
+      final students = await repository.createBatch(event.students);
+      emit(StudentsBatchCreated(students));
+      add(LoadStudents());
+    } catch (e) {
+      emit(StudentError(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteStudentsBatch(
+    DeleteStudentsBatch event,
+    Emitter<StudentState> emit,
+  ) async {
+    emit(StudentLoading());
+    try {
+      await repository.deleteBatch(event.ids);
+      emit(StudentsBatchDeleted());
       add(LoadStudents());
     } catch (e) {
       emit(StudentError(e.toString()));
