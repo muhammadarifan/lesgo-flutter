@@ -4,7 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/blocs/theme_bloc.dart';
+import 'package:lesgo_flutter/notifiers/pocketbase_auth_notifier.dart';
 import 'package:lesgo_flutter/service_locator.dart';
+import 'package:lesgo_flutter/services/pocketbase_service.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 import 'blocs/auth_bloc.dart';
 import 'blocs/course_bloc.dart';
@@ -37,9 +40,14 @@ void main() async {
   runApp(Application());
 }
 
-class Application extends StatelessWidget {
-  Application({super.key});
+class Application extends StatefulWidget {
+  const Application({super.key});
 
+  @override
+  State<Application> createState() => _ApplicationState();
+}
+
+class _ApplicationState extends State<Application> {
   final theme =
       const <TargetPlatform>{
         .android,
@@ -48,6 +56,122 @@ class Application extends StatelessWidget {
       }.contains(defaultTargetPlatform)
       ? FThemes.neutral.dark.touch
       : FThemes.neutral.dark.desktop;
+
+  final authNotifier = PocketBaseAuthNotifier(getIt<PocketBaseService>().pb);
+  late final GoRouter router;
+
+  @override
+  void initState() {
+    router = GoRouter(
+      refreshListenable: authNotifier,
+      initialLocation: '/',
+      redirect: (context, state) {
+        final bool isValid = authNotifier.isAuthenticated;
+
+        final bool isOnAuthPage =
+            state.uri.path == '/login' || state.uri.path == '/register';
+
+        // Jika PocketBase tidak valid (token expired/ga ada)
+        if (!isValid) {
+          // Dan user tidak sedang di hal login/regis, lempar ke login
+          return isOnAuthPage ? null : '/login';
+        }
+
+        // Jika PocketBase valid tapi user malah di hal login/regis, lempar ke dashboard
+        if (isValid && isOnAuthPage) {
+          return '/';
+        }
+
+        return null; // Tidak ada pengalihan, lanjut ke halaman tujuan
+      },
+      routes: [
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => BlocProvider(
+            create: (context) => AuthBloc(getIt<AuthRepository>()),
+            child: LoginPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterPage(),
+        ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return AdminLayout(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/tutors',
+                  builder: (context, state) => const TutorsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/students',
+                  builder: (context, state) => const StudentsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/courses',
+                  builder: (context, state) => const CoursesPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/schedules',
+                  builder: (context, state) => const SchedulesPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/invoices',
+                  builder: (context, state) => const InvoicesPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/payments',
+                  builder: (context, state) => const PaymentsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/reports',
+                  builder: (context, state) =>
+                      const Center(child: Text('Reports page coming soon...')),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/',
+                  builder: (context, state) => const DashboardPage(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,126 +202,18 @@ class Application extends StatelessWidget {
             create: (context) => PaymentBloc(getIt<PaymentRepository>()),
           ),
         ],
-        child: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, authState) {
-            final router = GoRouter(
-              redirect: (context, state) {
-                final isAuthenticated = authState is AuthAuthenticated;
-                final isOnLoginPage = state.uri.path == '/login';
-                final isOnRegisterPage = state.uri.path == '/register';
-
-                // If not authenticated and not on login/register pages, redirect to login
-                if (!isAuthenticated && !isOnLoginPage && !isOnRegisterPage) {
-                  return '/login';
-                }
-
-                // If authenticated and on login/register pages, redirect to home
-                if (isAuthenticated && (isOnLoginPage || isOnRegisterPage)) {
-                  return '/';
-                }
-
-                // No redirect needed
-                return null;
-              },
-              routes: [
-                GoRoute(
-                  path: '/login',
-                  builder: (context, state) => const LoginPage(),
-                ),
-                GoRoute(
-                  path: '/register',
-                  builder: (context, state) => const RegisterPage(),
-                ),
-                StatefulShellRoute.indexedStack(
-                  builder: (context, state, navigationShell) {
-                    return AdminLayout(navigationShell: navigationShell);
-                  },
-                  branches: [
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/tutors',
-                          builder: (context, state) => const TutorsPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/students',
-                          builder: (context, state) => const StudentsPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/courses',
-                          builder: (context, state) => const CoursesPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/schedules',
-                          builder: (context, state) => const SchedulesPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/invoices',
-                          builder: (context, state) => const InvoicesPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/payments',
-                          builder: (context, state) => const PaymentsPage(),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/reports',
-                          builder: (context, state) => const Center(
-                            child: Text('Reports page coming soon...'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    StatefulShellBranch(
-                      routes: [
-                        GoRoute(
-                          path: '/',
-                          builder: (context, state) => const DashboardPage(),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            );
-
-            return BlocBuilder<ThemeBloc, ThemeState>(
-              builder: (context, themeState) => MaterialApp.router(
-                routerConfig: router,
-                supportedLocales: FLocalizations.supportedLocales,
-                localizationsDelegates: const [
-                  ...FLocalizations.localizationsDelegates,
-                ],
-                builder: (_, child) => FTheme(
-                  data: themeState.themeData ?? theme,
-                  child: FToaster(child: FTooltipGroup(child: child!)),
-                ),
-              ),
-            );
-          },
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, themeState) => MaterialApp.router(
+            routerConfig: router,
+            supportedLocales: FLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              ...FLocalizations.localizationsDelegates,
+            ],
+            builder: (_, child) => FTheme(
+              data: themeState.themeData ?? theme,
+              child: FToaster(child: FTooltipGroup(child: child!)),
+            ),
+          ),
         ),
       ),
     );

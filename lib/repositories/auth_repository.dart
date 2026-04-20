@@ -13,26 +13,29 @@ class AuthRepository {
   Future<PocketBase> get pb async => _pbService.pb;
 
   Future<User> login(String email, String password) async {
-    final pbInstance = await pb;
-    final authData = await pbInstance
-        .collection('users')
-        .authWithPassword(email, password, expand: 'course_place');
+    try {
+      final pbInstance = await pb;
+      final authData = await pbInstance
+          .collection('users')
+          .authWithPassword(email, password, expand: 'course_place');
 
-    debugPrint(authData.record.get('expand.course_place').toString());
+      final user = User.fromJson(authData.record.toJson());
+      user.coursePlace = CoursePlace.fromJson(
+        authData.record.get('expand.course_place'),
+      );
 
-    final user = User.fromJson(authData.record.toJson());
-    user.coursePlace = CoursePlace.fromJson(
-      authData.record.get('expand.course_place'),
-    );
+      if (user.coursePlace?.isActive == false) {
+        await logout();
+        throw Exception('Course place is not active');
+      }
 
-    debugPrint(user.coursePlace.toString());
-
-    if (user.coursePlace?.isActive == false) {
-      await logout();
-      throw Exception('Course place is not active');
+      return user;
+    } on ClientException catch (e) {
+      debugPrint(e.response.toString());
+      throw Exception(e.response['message']);
+    } catch (e) {
+      throw Exception(e.toString());
     }
-
-    return user;
   }
 
   Future<User> register(

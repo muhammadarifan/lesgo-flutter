@@ -13,13 +13,28 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
-  final emailTextEditingController = TextEditingController();
-  final passwordTextEditingController = TextEditingController();
+  late final TextEditingController emailTextEditingController;
+  late final TextEditingController passwordTextEditingController;
+
+  @override
+  void initState() {
+    super.initState();
+    emailTextEditingController = TextEditingController();
+    passwordTextEditingController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    emailTextEditingController.dispose();
+    passwordTextEditingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        debugPrint(state.toString());
         if (state is AuthAuthenticated) {
           context.go('/');
         } else if (state is AuthError) {
@@ -32,69 +47,72 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       },
-      builder: (context, state) {
-        return FScaffold(
-          child: Center(
-            child: Container(
-              width: 400,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: context.theme.colors.background,
-                borderRadius: context.theme.style.borderRadius.md,
-                border: Border.all(color: context.theme.colors.border),
-              ),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 16,
-                  children: [
-                    Text('Login', style: context.theme.typography.xl2),
-                    FTextFormField(
-                      control: .managed(controller: emailTextEditingController),
-                      hint: 'Email',
-                      label: Text('Email'),
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) =>
-                          value!.trim().isEmpty ? 'Email is required' : null,
+      child: FScaffold(
+        child: Center(
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: context.theme.colors.background,
+              borderRadius: context.theme.style.borderRadius.md,
+              border: Border.all(color: context.theme.colors.border),
+            ),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 16,
+                children: [
+                  Text('Login', style: context.theme.typography.xl2),
+                  FTextFormField(
+                    control: .managed(controller: emailTextEditingController),
+                    hint: 'Email',
+                    label: Text('Email'),
+                    autovalidateMode: .onUserInteraction,
+                    validator: (value) =>
+                        value!.trim().isEmpty ? 'Email is required' : null,
+                    // onSaved: (value) => email = value!,
+                  ),
+                  FTextFormField.password(
+                    control: .managed(
+                      controller: passwordTextEditingController,
                     ),
-                    FTextFormField.password(
-                      control: .managed(
-                        controller: passwordTextEditingController,
-                      ),
-                      hint: 'Password',
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) =>
-                          value!.trim().isEmpty ? 'Password is required' : null,
-                    ),
-                    if (state is AuthLoading)
-                      const FCircularProgress()
-                    else
-                      FButton(
+                    hint: 'Password',
+                    autovalidateMode: .onUserInteraction,
+                    validator: (value) =>
+                        value!.trim().isEmpty ? 'Password is required' : null,
+                    // onSaved: (value) => password = value!,
+                  ),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      return FButton(
                         onPress: () {
                           if (!formKey.currentState!.validate()) return;
+                          formKey.currentState!.save();
 
                           final email = emailTextEditingController.text;
                           final password = passwordTextEditingController.text;
 
-                          context.read<AuthBloc>().add(
-                            Login(email.trim(), password),
-                          );
+                          context.read<AuthBloc>().add(Login(email, password));
                         },
-                        child: const Text('Login'),
-                      ),
-                    FButton(
-                      onPress: () => context.go('/register'),
-                      variant: .ghost,
-                      child: const Text('Don\'t have an account? Register'),
-                    ),
-                  ],
-                ),
+                        child: (state is AuthLoading)
+                            ? const FCircularProgress()
+                            : const Text('Login'),
+                      );
+                    },
+                  ),
+
+                  FButton(
+                    onPress: () => context.go('/register'),
+                    variant: .ghost,
+                    child: const Text('Don\'t have an account? Register'),
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

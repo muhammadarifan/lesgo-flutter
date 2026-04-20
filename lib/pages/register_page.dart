@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          context.go('/dashboard');
+          context.go('/');
         } else if (state is AuthError) {
           showFToast(
             context: context,
