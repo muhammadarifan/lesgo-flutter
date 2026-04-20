@@ -1,7 +1,7 @@
 import 'package:lesgo_flutter/enums/invoice_status_enum.dart';
 import 'package:lesgo_flutter/enums/currency_enum.dart';
+import 'package:lesgo_flutter/models/course/course.dart';
 import 'package:lesgo_flutter/models/student.dart';
-import 'package:lesgo_flutter/models/course.dart';
 
 class Invoice {
   final String id;
@@ -117,7 +117,7 @@ class Invoice {
   // Calculate total amount from courses
   int get totalAmount {
     if (courseObjects.isEmpty) return 0;
-    return courseObjects.fold(0, (sum, course) => sum + course.price);
+    return courseObjects.fold(0, (sum, course) => sum + (course.price));
   }
 
   // Get currency, assuming all courses have the same currency

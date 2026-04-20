@@ -1,4 +1,4 @@
-import 'package:lesgo_flutter/models/course.dart';
+import 'package:lesgo_flutter/models/course/course.dart';
 import 'package:lesgo_flutter/models/student.dart';
 import 'package:lesgo_flutter/models/tutor.dart';
 

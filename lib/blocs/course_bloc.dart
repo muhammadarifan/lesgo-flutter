@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/course.dart';
+import 'package:lesgo_flutter/models/course/course.dart';
 import 'package:lesgo_flutter/repositories/course_repository.dart';
 
 // Events

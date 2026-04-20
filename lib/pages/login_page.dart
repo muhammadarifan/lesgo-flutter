@@ -34,7 +34,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        debugPrint(state.toString());
         if (state is AuthAuthenticated) {
           context.go('/');
         } else if (state is AuthError) {

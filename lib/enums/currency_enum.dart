@@ -1,4 +1,7 @@
+import 'package:json_annotation/json_annotation.dart';
+
 enum CurrencyEnum {
+  @JsonValue('idr')
   idr;
 
   String get displayName {

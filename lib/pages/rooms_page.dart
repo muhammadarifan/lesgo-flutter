@@ -2,26 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:lesgo_flutter/enums/currency_enum.dart';
-import 'package:lesgo_flutter/models/course/course.dart';
-import '../blocs/course_bloc.dart';
+import 'package:lesgo_flutter/models/room/room.dart';
+import '../blocs/room_bloc.dart';
 
-class CoursesPage extends StatefulWidget {
-  const CoursesPage({super.key});
+class RoomsPage extends StatefulWidget {
+  const RoomsPage({super.key});
 
   @override
-  State<CoursesPage> createState() => _CoursesPageState();
+  State<RoomsPage> createState() => _RoomsPageState();
 }
 
-class _CoursesPageState extends State<CoursesPage> {
+class _RoomsPageState extends State<RoomsPage> {
   String _searchQuery = '';
   final List<FPersistentSheetController> _controllers = [];
 
   @override
   void initState() {
     super.initState();
-    context.read<CourseBloc>().add(LoadCourses());
+    context.read<RoomBloc>().add(LoadRooms());
   }
 
   @override
@@ -34,9 +32,9 @@ class _CoursesPageState extends State<CoursesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<CourseBloc, CourseState>(
+    return BlocConsumer<RoomBloc, RoomState>(
       listener: (context, state) {
-        if (state is CourseError) {
+        if (state is RoomError) {
           showFToast(
             context: context,
             variant: .destructive,
@@ -47,10 +45,10 @@ class _CoursesPageState extends State<CoursesPage> {
         }
       },
       builder: (context, state) {
-        if (state is CourseLoading) {
+        if (state is RoomLoading) {
           return const Center(child: FCircularProgress());
-        } else if (state is CoursesLoaded) {
-          final filteredCourses = _filter(state.courses);
+        } else if (state is RoomsLoaded) {
+          final filteredRooms = _filter(state.rooms);
 
           return FScaffold(
             child: Padding(
@@ -84,59 +82,60 @@ class _CoursesPageState extends State<CoursesPage> {
                           style: const .delta(flingVelocity: 700),
                           side: .rtl,
                           builder: (context, controller) =>
-                              _buildCourseForm(controller: controller),
+                              _buildRoomForm(controller: controller),
                         ),
                         suffix: const Icon(Icons.add),
-                        child: const Text('Add Course'),
+                        child: const Text('Add Room'),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  // Courses list
-                  Expanded(child: _buildCoursesList(filteredCourses)),
+                  // Rooms list
+                  Expanded(child: _buildRoomsList(filteredRooms)),
                 ],
               ),
             ),
           );
         } else {
           return const FScaffold(
-            child: Center(child: Text('Failed to load courses')),
+            child: Center(child: Text('Failed to load rooms')),
           );
         }
       },
     );
   }
 
-  List<Course> _filter(List<Course> courses) {
-    final filteredSchedules = courses.where((course) {
+  List<Room> _filter(List<Room> rooms) {
+    final filteredRooms = rooms.where((room) {
       return [
-        course.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+        room.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+        room.coursePlace.toLowerCase().contains(_searchQuery.toLowerCase()),
       ].any((element) => element == true);
     }).toList();
 
-    return filteredSchedules;
+    return filteredRooms;
   }
 
-  Widget _buildCoursesList(List<Course> courses) {
-    if (courses.isEmpty) {
-      return const Center(child: Text('No courses found'));
+  Widget _buildRoomsList(List<Room> rooms) {
+    if (rooms.isEmpty) {
+      return const Center(child: Text('No rooms found'));
     }
 
     return FItemGroup.builder(
       itemBuilder: (context, index) {
-        final course = courses[index];
+        final room = rooms[index];
         return FItem(
-          prefix: FAvatar.raw(child: Text(course.name[0].toUpperCase())),
-          title: Text(course.name),
-          subtitle: Text((course.isActive) ? 'Active' : 'Inactive'),
+          prefix: FAvatar.raw(child: Text(room.name[0].toUpperCase())),
+          title: Text(room.name),
+          subtitle: Text('Course Place: ${room.coursePlace}'),
           suffix: Row(
             mainAxisSize: .min,
             spacing: 8,
             children: [
               FButton(
                 child: Icon(FIcons.eye),
-                onPress: () => _showCourseDetails(course),
+                onPress: () => _showRoomDetails(room),
               ),
               FButton(
                 child: Icon(FIcons.pencil),
@@ -145,37 +144,33 @@ class _CoursesPageState extends State<CoursesPage> {
                     context: context,
                     style: const .delta(flingVelocity: 700),
                     side: .rtl,
-                    builder: (context, controller) => _buildCourseForm(
-                      controller: controller,
-                      course: course,
-                    ),
+                    builder: (context, controller) =>
+                        _buildRoomForm(controller: controller, room: room),
                   );
                   _controllers.add(controller);
                 },
               ),
               FButton(
                 child: Icon(FIcons.trash),
-                onPress: () => _deleteCourse(course),
+                onPress: () => _deleteRoom(room),
               ),
             ],
           ),
         );
       },
-      count: courses.length,
+      count: rooms.length,
       divider: .full,
     );
   }
 
-  Widget _buildCourseForm({
-    Course? course,
+  Widget _buildRoomForm({
+    Room? room,
     required FPersistentSheetController controller,
   }) {
-    final isEditing = course != null;
+    final isEditing = room != null;
     final formKey = GlobalKey<FormState>();
-    String name = isEditing ? (course.name) : '';
-    int price = isEditing ? (course.price) : 0;
-    CurrencyEnum currency = isEditing ? (course.currency) : CurrencyEnum.idr;
-    bool isActive = isEditing ? (course.isActive) : true;
+    String name = isEditing ? (room.name) : '';
+    String coursePlace = isEditing ? (room.coursePlace) : '';
 
     return FSheets(
       child: Container(
@@ -192,53 +187,26 @@ class _CoursesPageState extends State<CoursesPage> {
             spacing: 16,
             children: [
               Text(
-                isEditing ? 'Edit Course' : 'Add New Course',
+                isEditing ? 'Edit Room' : 'Add New Room',
                 style: context.theme.typography.xl,
               ),
               FTextFormField(
                 control: .managed(initial: TextEditingValue(text: name)),
                 label: const Text('Name'),
-                hint: 'Jhon Doe',
+                hint: 'Room 101',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
                     value!.trim().isEmpty ? 'Name is required' : null,
                 onSaved: (newValue) => name = newValue!,
               ),
               FTextFormField(
-                control: .managed(
-                  initial: TextEditingValue(text: price.toString()),
-                ),
-                label: const Text('Price'),
-                hint: '1000',
+                control: .managed(initial: TextEditingValue(text: coursePlace)),
+                label: const Text('Course Place'),
+                hint: 'Main Building',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
-                    value!.trim().isEmpty ? 'Price is required' : null,
-                onSaved: (newValue) => price = int.parse(newValue!),
-              ),
-              FSelect<CurrencyEnum>.rich(
-                control: .managed(initial: currency),
-                label: const Text('Currency'),
-                hint: 'Select a currency',
-                format: (s) => s.displayName,
-                children: CurrencyEnum.values
-                    .map(
-                      (e) => FSelectItem(title: Text(e.displayName), value: e),
-                    )
-                    .toList(),
-                validator: (value) => value == null ? 'Select an item' : null,
-                onSaved: (newValue) => currency = newValue!,
-              ),
-              FSelect<bool>.rich(
-                control: .managed(initial: isActive),
-                label: const Text('Status'),
-                hint: 'Select a status',
-                format: (s) => s ? 'Active' : 'Inactive',
-                children: [
-                  .item(title: const Text('Active'), value: true),
-                  .item(title: const Text('Inactive'), value: false),
-                ],
-                validator: (value) => value == null ? 'Select an item' : null,
-                onSaved: (newValue) => isActive = newValue!,
+                    value!.trim().isEmpty ? 'Course Place is required' : null,
+                onSaved: (newValue) => coursePlace = newValue!,
               ),
               const SizedBox(height: 8),
               Row(
@@ -260,27 +228,21 @@ class _CoursesPageState extends State<CoursesPage> {
 
                         formKey.currentState!.save();
 
-                        final updatedCourse = isEditing
-                            ? course.copyWith(
+                        final updatedRoom = isEditing
+                            ? room.copyWith(
                                 name: name.trim(),
-                                price: price,
-                                currency: currency,
-                                isActive: isActive,
+                                coursePlace: coursePlace.trim(),
                               )
-                            : Course.create(
+                            : Room.create(
                                 name: name.trim(),
-                                price: price,
-                                currency: currency,
-                              );
+                              ).copyWith(coursePlace: coursePlace.trim());
 
                         if (isEditing) {
-                          context.read<CourseBloc>().add(
-                            UpdateCourse(updatedCourse.id, updatedCourse),
+                          context.read<RoomBloc>().add(
+                            UpdateRoom(updatedRoom.id, updatedRoom),
                           );
                         } else {
-                          context.read<CourseBloc>().add(
-                            CreateCourse(updatedCourse),
-                          );
+                          context.read<RoomBloc>().add(CreateRoom(updatedRoom));
                         }
 
                         controller.hide();
@@ -297,12 +259,12 @@ class _CoursesPageState extends State<CoursesPage> {
     );
   }
 
-  void _deleteCourse(Course course) {
+  void _deleteRoom(Room room) {
     showFDialog(
       context: context,
       builder: (context, style, animation) => FDialog(
-        title: const Text('Delete Course'),
-        body: Text('Are you sure you want to delete "${course.name}"?'),
+        title: const Text('Delete Room'),
+        body: Text('Are you sure you want to delete "${room.name}"?'),
         actions: [
           FButton(
             onPress: () => context.pop(),
@@ -311,7 +273,7 @@ class _CoursesPageState extends State<CoursesPage> {
           ),
           FButton(
             onPress: () {
-              context.read<CourseBloc>().add(DeleteCourse(course.id));
+              context.read<RoomBloc>().add(DeleteRoom(room.id));
               context.pop();
             },
             variant: .destructive,
@@ -322,27 +284,30 @@ class _CoursesPageState extends State<CoursesPage> {
     );
   }
 
-  void _showCourseDetails(Course course) {
+  void _showRoomDetails(Room room) {
     showFDialog(
       context: context,
       builder: (context, style, animation) => FDialog(
-        title: Text('Detail Course'),
+        title: Text('Detail Room'),
         body: FItemGroup(
           style: const .delta(spacing: 4),
           intrinsicWidth: null,
           divider: .full,
           children: [
-            .item(title: const Text('Name'), details: Text(course.name)),
+            .item(title: const Text('Name'), details: Text(room.name)),
             .item(
-              title: const Text('Price'),
-              details: Text(
-                '${course.currency.displayName} ${_formatPrice(course.price)}',
+              title: const Text('Course Place'),
+              details: Text(room.coursePlace),
+            ),
+            .item(
+              title: const Text('Created'),
+              details: Text(room.created.toString()),
+            ),
+            if (room.updated != null)
+              .item(
+                title: const Text('Updated'),
+                details: Text(room.updated.toString()),
               ),
-            ),
-            .item(
-              title: const Text('Status'),
-              details: Text(course.isActive ? 'Active' : 'Inactive'),
-            ),
           ],
         ),
         actions: [
@@ -350,11 +315,5 @@ class _CoursesPageState extends State<CoursesPage> {
         ],
       ),
     );
-  }
-
-  String _formatPrice(int? price) {
-    if (price == null) return '0';
-    var formatter = NumberFormat('#,###', 'id_ID');
-    return formatter.format(price);
   }
 }

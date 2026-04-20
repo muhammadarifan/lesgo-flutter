@@ -3,12 +3,12 @@ import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lesgo_flutter/models/course/course.dart';
 import '../blocs/invoice_bloc.dart';
 import '../blocs/student_bloc.dart';
 import '../blocs/course_bloc.dart';
 import '../models/invoice.dart';
 import '../models/student.dart';
-import '../models/course.dart';
 import '../enums/invoice_status_enum.dart';
 
 class InvoicesPage extends StatefulWidget {

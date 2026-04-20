@@ -3,12 +3,12 @@ import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lesgo_flutter/models/course/course.dart';
 import '../blocs/schedule_bloc.dart';
 import '../blocs/course_bloc.dart';
 import '../blocs/tutor_bloc.dart';
 import '../blocs/student_bloc.dart';
 import '../models/schedule.dart';
-import '../models/course.dart';
 import '../models/tutor.dart';
 import '../models/student.dart';
 

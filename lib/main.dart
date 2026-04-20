@@ -12,6 +12,7 @@ import 'blocs/auth_bloc.dart';
 import 'blocs/course_bloc.dart';
 import 'blocs/invoice_bloc.dart';
 import 'blocs/payment_bloc.dart';
+import 'blocs/room_bloc.dart';
 import 'blocs/schedule_bloc.dart';
 import 'blocs/student_bloc.dart';
 import 'blocs/tutor_bloc.dart';
@@ -24,10 +25,12 @@ import 'pages/students_page.dart';
 import 'pages/courses_page.dart';
 import 'pages/invoices_page.dart';
 import 'pages/payments_page.dart';
+import 'pages/rooms_page.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/course_repository.dart';
 import 'repositories/invoice_repository.dart';
 import 'repositories/payment_repository.dart';
+import 'repositories/room_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/student_repository.dart';
 import 'repositories/tutor_repository.dart';
@@ -127,6 +130,14 @@ class _ApplicationState extends State<Application> {
             StatefulShellBranch(
               routes: [
                 GoRoute(
+                  path: '/rooms',
+                  builder: (context, state) => const RoomsPage(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
                   path: '/schedules',
                   builder: (context, state) => const SchedulesPage(),
                 ),
@@ -191,6 +202,7 @@ class _ApplicationState extends State<Application> {
           BlocProvider(
             create: (context) => CourseBloc(getIt<CourseRepository>()),
           ),
+          BlocProvider(create: (context) => RoomBloc(getIt<RoomRepository>())),
           BlocProvider(
             create: (context) => ScheduleBloc(getIt<ScheduleRepository>()),
           ),

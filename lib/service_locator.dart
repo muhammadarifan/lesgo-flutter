@@ -3,6 +3,7 @@ import 'package:lesgo_flutter/repositories/auth_repository.dart';
 import 'package:lesgo_flutter/repositories/course_repository.dart';
 import 'package:lesgo_flutter/repositories/invoice_repository.dart';
 import 'package:lesgo_flutter/repositories/payment_repository.dart';
+import 'package:lesgo_flutter/repositories/room_repository.dart';
 import 'package:lesgo_flutter/repositories/schedule_repository.dart';
 import 'package:lesgo_flutter/repositories/student_repository.dart';
 import 'package:lesgo_flutter/repositories/tutor_repository.dart';
@@ -21,6 +22,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<TutorRepository>(TutorRepository());
   getIt.registerSingleton<StudentRepository>(StudentRepository());
   getIt.registerSingleton<CourseRepository>(CourseRepository());
+  getIt.registerSingleton<RoomRepository>(RoomRepository());
   getIt.registerSingleton<ScheduleRepository>(ScheduleRepository());
   getIt.registerSingleton<InvoiceRepository>(InvoiceRepository());
   getIt.registerSingleton<PaymentRepository>(PaymentRepository());

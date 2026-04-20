@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 import 'package:lesgo_flutter/blocs/auth_bloc.dart';
 import 'package:lesgo_flutter/blocs/course_bloc.dart';
+import 'package:lesgo_flutter/blocs/room_bloc.dart';
 import 'package:lesgo_flutter/blocs/schedule_bloc.dart';
 import 'package:lesgo_flutter/blocs/tutor_bloc.dart';
 import 'package:lesgo_flutter/blocs/student_bloc.dart';
@@ -26,6 +27,8 @@ class AdminLayout extends StatelessWidget {
         return 'Students Management';
       case '/courses':
         return 'Courses Management';
+      case '/rooms':
+        return 'Rooms Management';
       case '/schedules':
         return 'Schedules Management';
       case '/invoices':
@@ -46,12 +49,16 @@ class AdminLayout extends StatelessWidget {
         context.read<TutorBloc>().add(LoadTutorCount());
         context.read<StudentBloc>().add(LoadStudentCount());
         context.read<CourseBloc>().add(LoadCourseCount());
+        context.read<RoomBloc>().add(LoadRoomCount());
         context.read<ScheduleBloc>().add(LoadScheduleCount());
         context.read<PaymentBloc>().add(LoadPaymentCount());
         context.read<InvoiceBloc>().add(LoadInvoiceCount());
         break;
       case '/courses':
         context.read<CourseBloc>().add(LoadCourses());
+        break;
+      case '/rooms':
+        context.read<RoomBloc>().add(LoadRooms());
         break;
       case '/schedules':
         context.read<ScheduleBloc>().add(LoadSchedules());
@@ -128,6 +135,12 @@ class AdminLayout extends StatelessWidget {
             label: const Text('Courses'),
             selected: currentRoute == '/courses',
             onPress: () => context.go('/courses'),
+          ),
+          FSidebarItem(
+            icon: const Icon(Icons.room),
+            label: const Text('Rooms'),
+            selected: currentRoute == '/rooms',
+            onPress: () => context.go('/rooms'),
           ),
           FSidebarItem(
             icon: const Icon(Icons.calendar_month),

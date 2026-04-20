@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/course_place.dart';
+import 'package:lesgo_flutter/models/course_place/course_place.dart';
 import 'package:lesgo_flutter/repositories/course_place_repository.dart';
 
 // Events

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/user.dart';
+import 'package:lesgo_flutter/models/user/user.dart';
 import 'package:lesgo_flutter/repositories/auth_repository.dart';
 
 // Events
