@@ -1,12 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:universal_html/html.dart' as html;
 import '../blocs/student_bloc.dart';
 import '../models/student.dart';
@@ -346,81 +343,71 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
-  void _showImportSheet() {
-    showFPersistentSheet(
-      context: context,
-      style: const .delta(flingVelocity: 700),
-      side: .rtl,
-      builder: (context, controller) => FSheets(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: context.theme.colors.background,
-            borderRadius: context.theme.style.borderRadius.md,
-            border: Border.all(color: context.theme.colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 16,
-            children: [
-              Text(
-                'Import Students from Excel',
-                style: context.theme.typography.xl,
-              ),
-              FButton(
-                onPress: () async {
-                  // Download example file
-                  final bytes = ExcelHelper.generateExampleFile();
-                  if (kIsWeb) {
-                    final blob = html.Blob([bytes]);
-                    final url = html.Url.createObjectUrlFromBlob(blob);
-                    final anchor = html.AnchorElement(href: url)
-                      ..setAttribute('download', 'students_example.xlsx')
-                      ..click();
-                    html.Url.revokeObjectUrl(url);
-                  } else {
-                    // For mobile, save to temp and share
-                    final tempDir = await getTemporaryDirectory();
-                    final file = File('${tempDir.path}/students_example.xlsx');
-                    await file.writeAsBytes(bytes);
-                    await Share.shareXFiles([
-                      XFile(file.path),
-                    ], text: 'Students example file');
+  void _showImportSheet() => showFPersistentSheet(
+    context: context,
+    style: const .delta(flingVelocity: 700),
+    side: .rtl,
+    builder: (context, controller) => FSheets(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.theme.colors.background,
+          borderRadius: context.theme.style.borderRadius.md,
+          border: Border.all(color: context.theme.colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 16,
+          children: [
+            Text(
+              'Import Students from Excel',
+              style: context.theme.typography.xl,
+            ),
+            FButton(
+              onPress: () async {
+                // Download example file
+                final bytes = ExcelHelper.generateExampleFile();
+                if (kIsWeb) {
+                  final blob = html.Blob([bytes]);
+                  final url = html.Url.createObjectUrlFromBlob(blob);
+                  final _ = html.AnchorElement(href: url)
+                    ..setAttribute('download', 'students_example.xlsx')
+                    ..click();
+                  html.Url.revokeObjectUrl(url);
+                }
+                controller.hide();
+              },
+              child: const Text('Download Example File'),
+            ),
+            FButton(
+              onPress: () async {
+                // Import file
+                final result = await FilePicker.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['xlsx'],
+                  withData: true,
+                );
+                if (result != null &&
+                    result.files.isNotEmpty &&
+                    result.files.first.bytes != null) {
+                  final bytes = result.files.first.bytes!;
+                  final data = ExcelHelper.convertFromBytes(bytes);
+                  final studentList = data
+                      .map((e) => Student.fromJson(e))
+                      .toList();
+                  if (context.mounted) {
+                    context.read<StudentBloc>().add(
+                      CreateStudentsBatch(studentList),
+                    );
                   }
-                  controller.hide();
-                },
-                child: const Text('Download Example File'),
-              ),
-              FButton(
-                onPress: () async {
-                  // Import file
-                  final result = await FilePicker.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['xlsx'],
-                    withData: true,
-                  );
-                  if (result != null &&
-                      result.files.isNotEmpty &&
-                      result.files.first.bytes != null) {
-                    final bytes = result.files.first.bytes!;
-                    final data = ExcelHelper.convertFromBytes(bytes);
-                    final studentList = data
-                        .map((e) => Student.fromJson(e))
-                        .toList();
-                    if (context.mounted) {
-                      context.read<StudentBloc>().add(
-                        CreateStudentsBatch(studentList),
-                      );
-                    }
-                  }
-                  controller.hide();
-                },
-                child: const Text('Import File'),
-              ),
-            ],
-          ),
+                }
+                controller.hide();
+              },
+              child: const Text('Import File'),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }

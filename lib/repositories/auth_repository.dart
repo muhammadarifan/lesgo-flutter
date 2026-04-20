@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:lesgo_flutter/models/course_place.dart';

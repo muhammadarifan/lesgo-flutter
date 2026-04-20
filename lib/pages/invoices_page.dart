@@ -547,6 +547,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
       final activeStudents = students.where((s) => s.isActive).toList();
 
       // Get all active courses
+      // ignore: use_build_context_synchronously
       final courses = await context.read<CourseBloc>().repository.getAll();
       final activeCourses = courses.where((c) => c.isActive).toList();
 
@@ -607,6 +608,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
             .toList();
 
         for (final invoice in currentMonthInvoices) {
+          // ignore: use_build_context_synchronously
           await context.read<InvoiceBloc>().repository.delete(invoice.id);
         }
       }
@@ -630,6 +632,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
           isActive: true,
         );
 
+        // ignore: use_build_context_synchronously
         await context.read<InvoiceBloc>().repository.create(invoice);
         generatedCount++;
       }

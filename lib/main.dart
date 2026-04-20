@@ -7,7 +7,6 @@ import 'package:lesgo_flutter/blocs/theme_bloc.dart';
 import 'package:lesgo_flutter/notifiers/pocketbase_auth_notifier.dart';
 import 'package:lesgo_flutter/service_locator.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 import 'blocs/auth_bloc.dart';
 import 'blocs/course_bloc.dart';
