@@ -8,7 +8,7 @@ part 'course.g.dart';
 abstract class Course with _$Course {
   factory Course({
     required String id,
-    @JsonKey(name: 'course_place') required String coursePlace,
+    @JsonKey(name: 'course_place') required String coursePlaceId,
     required String name,
     required int price,
     required CurrencyEnum currency,
@@ -27,7 +27,7 @@ abstract class Course with _$Course {
     required CurrencyEnum currency,
   }) => Course(
     id: '',
-    coursePlace: '',
+    coursePlaceId: '',
     name: name,
     price: price,
     currency: currency,

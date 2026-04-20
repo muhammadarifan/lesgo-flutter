@@ -8,7 +8,7 @@ part of 'course.dart';
 
 _Course _$CourseFromJson(Map<String, dynamic> json) => _Course(
   id: json['id'] as String,
-  coursePlace: json['course_place'] as String,
+  coursePlaceId: json['course_place'] as String,
   name: json['name'] as String,
   price: (json['price'] as num).toInt(),
   currency: $enumDecode(_$CurrencyEnumEnumMap, json['currency']),
@@ -19,7 +19,7 @@ _Course _$CourseFromJson(Map<String, dynamic> json) => _Course(
 
 Map<String, dynamic> _$CourseToJson(_Course instance) => <String, dynamic>{
   'id': instance.id,
-  'course_place': instance.coursePlace,
+  'course_place': instance.coursePlaceId,
   'name': instance.name,
   'price': instance.price,
   'currency': _$CurrencyEnumEnumMap[instance.currency]!,

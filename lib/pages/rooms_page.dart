@@ -13,13 +13,26 @@ class RoomsPage extends StatefulWidget {
 }
 
 class _RoomsPageState extends State<RoomsPage> {
-  String _searchQuery = '';
   final List<FPersistentSheetController> _controllers = [];
+  FPaginationController? _paginationController;
+  String? _currentSearch;
 
   @override
   void initState() {
     super.initState();
+    _paginationController = FPaginationController(
+      pages: 1,
+      page: 0,
+    ); // 0-based indexing
+    _paginationController!.addListener(_onPageChange);
     context.read<RoomBloc>().add(LoadRooms());
+  }
+
+  void _onPageChange() {
+    final page = _paginationController!.value + 1;
+    context.read<RoomBloc>().add(
+      PaginateRooms(page: page, limit: 5, search: _currentSearch),
+    );
   }
 
   @override
@@ -27,97 +40,118 @@ class _RoomsPageState extends State<RoomsPage> {
     for (final controller in _controllers) {
       controller.dispose();
     }
+    _paginationController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RoomBloc, RoomState>(
-      listener: (context, state) {
-        if (state is RoomError) {
-          showFToast(
-            context: context,
-            variant: .destructive,
-            icon: Icon(FIcons.circleX),
-            title: Text('Error'),
-            description: Text(state.message),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is RoomLoading) {
-          return const Center(child: FCircularProgress());
-        } else if (state is RoomsLoaded) {
-          final filteredRooms = _filter(state.rooms);
-
-          return FScaffold(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header with search and add button
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FTextField(
-                          prefixBuilder: (context, style, variants) => Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 8.0,
-                            ),
-                            child: const Icon(FIcons.search),
-                          ),
-                          onSubmit: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                          },
+    return FScaffold(
+      child: Padding(
+        padding: const .all(16.0),
+        child: Column(
+          crossAxisAlignment: .start,
+          children: [
+            // Header with search and add button
+            Row(
+              children: [
+                Expanded(
+                  child: FTextField(
+                    prefixBuilder: (context, style, variants) => Padding(
+                      padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+                      child: const Icon(FIcons.search),
+                    ),
+                    onSubmit: (value) {
+                      setState(() {
+                        _currentSearch = value.isEmpty ? null : value;
+                        _paginationController?.value = 0;
+                      });
+                      context.read<RoomBloc>().add(
+                        PaginateRooms(
+                          page: 1,
+                          limit: 5,
+                          search: value.isEmpty ? null : value,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      FButton(
-                        onPress: () => showFPersistentSheet(
-                          context: context,
-                          style: const .delta(flingVelocity: 700),
-                          side: .rtl,
-                          builder: (context, controller) =>
-                              _buildRoomForm(controller: controller),
-                        ),
-                        suffix: const Icon(Icons.add),
-                        child: const Text('Add Room'),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(width: 16),
+                FButton(
+                  onPress: () => showFPersistentSheet(
+                    context: context,
+                    style: const .delta(flingVelocity: 700),
+                    side: .rtl,
+                    builder: (context, controller) =>
+                        _buildRoomForm(controller: controller),
+                  ),
+                  suffix: const Icon(Icons.add),
+                  child: const Text('Add Room'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-                  // Rooms list
-                  Expanded(child: _buildRoomsList(filteredRooms)),
-                ],
+            // Rooms list
+            Expanded(
+              child: BlocBuilder<RoomBloc, RoomState>(
+                builder: (context, state) {
+                  if (state is RoomLoading) {
+                    return const Center(child: FCircularProgress());
+                  } else if (state is RoomsLoaded) {
+                    return _buildRoomsList(state);
+                  } else {
+                    return const Center(child: Text('Failed to load rooms'));
+                  }
+                },
               ),
             ),
-          );
-        } else {
-          return const FScaffold(
-            child: Center(child: Text('Failed to load rooms')),
-          );
-        }
-      },
+
+            // Pagination (outside BlocBuilder)
+            if (_paginationController != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: FPagination(
+                  control: .managed(controller: _paginationController!),
+                ),
+              ),
+
+            // BlocListener for side effects
+            BlocListener<RoomBloc, RoomState>(
+              listener: (context, state) {
+                if (state is RoomError) {
+                  showFToast(
+                    context: context,
+                    variant: .destructive,
+                    icon: Icon(FIcons.circleX),
+                    title: Text('Error'),
+                    description: Text(state.message),
+                  );
+                } else if (state is RoomsLoaded) {
+                  if (_paginationController == null ||
+                      _paginationController!.pages != state.totalPages) {
+                    _paginationController?.dispose();
+                    _paginationController = FPaginationController(
+                      pages: state.totalPages,
+                      page: state.currentPage - 1,
+                    );
+                    _paginationController!.addListener(_onPageChange);
+                  } else {
+                    _paginationController?.value = state.currentPage - 1;
+                  }
+                }
+              },
+              child: const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  List<Room> _filter(List<Room> rooms) {
-    final filteredRooms = rooms.where((room) {
-      return [
-        room.name.toLowerCase().contains(_searchQuery.toLowerCase()),
-        room.coursePlace.toLowerCase().contains(_searchQuery.toLowerCase()),
-      ].any((element) => element == true);
-    }).toList();
+  Widget _buildRoomsList(RoomsLoaded state) {
+    final rooms = state.rooms;
 
-    return filteredRooms;
-  }
-
-  Widget _buildRoomsList(List<Room> rooms) {
     if (rooms.isEmpty) {
       return const Center(child: Text('No rooms found'));
     }
@@ -128,7 +162,7 @@ class _RoomsPageState extends State<RoomsPage> {
         return FItem(
           prefix: FAvatar.raw(child: Text(room.name[0].toUpperCase())),
           title: Text(room.name),
-          subtitle: Text('Course Place: ${room.coursePlace}'),
+          subtitle: Text('Course Place: ${room.coursePlaceId}'),
           suffix: Row(
             mainAxisSize: .min,
             spacing: 8,
@@ -170,7 +204,6 @@ class _RoomsPageState extends State<RoomsPage> {
     final isEditing = room != null;
     final formKey = GlobalKey<FormState>();
     String name = isEditing ? (room.name) : '';
-    String coursePlace = isEditing ? (room.coursePlace) : '';
 
     return FSheets(
       child: Container(
@@ -199,15 +232,6 @@ class _RoomsPageState extends State<RoomsPage> {
                     value!.trim().isEmpty ? 'Name is required' : null,
                 onSaved: (newValue) => name = newValue!,
               ),
-              FTextFormField(
-                control: .managed(initial: TextEditingValue(text: coursePlace)),
-                label: const Text('Course Place'),
-                hint: 'Main Building',
-                autovalidateMode: .onUserInteraction,
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Course Place is required' : null,
-                onSaved: (newValue) => coursePlace = newValue!,
-              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -229,13 +253,8 @@ class _RoomsPageState extends State<RoomsPage> {
                         formKey.currentState!.save();
 
                         final updatedRoom = isEditing
-                            ? room.copyWith(
-                                name: name.trim(),
-                                coursePlace: coursePlace.trim(),
-                              )
-                            : Room.create(
-                                name: name.trim(),
-                              ).copyWith(coursePlace: coursePlace.trim());
+                            ? room.copyWith(name: name.trim())
+                            : Room.create(name: name.trim());
 
                         if (isEditing) {
                           context.read<RoomBloc>().add(
@@ -297,7 +316,7 @@ class _RoomsPageState extends State<RoomsPage> {
             .item(title: const Text('Name'), details: Text(room.name)),
             .item(
               title: const Text('Course Place'),
-              details: Text(room.coursePlace),
+              details: Text(room.coursePlaceId),
             ),
             .item(
               title: const Text('Created'),

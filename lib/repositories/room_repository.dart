@@ -1,18 +1,16 @@
 import 'package:flutter/widgets.dart';
-import 'package:get_it/get_it.dart';
+import 'package:lesgo_flutter/helpers/pocketbase_helper.dart';
 import 'package:lesgo_flutter/models/room/room.dart';
+import 'package:lesgo_flutter/service_locator.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class RoomRepository {
-  final PocketBaseService _pbService = GetIt.instance<PocketBaseService>();
-
-  Future<PocketBase> get pb async => _pbService.pb;
+  final pb = getIt<PocketBaseService>().pb;
 
   Future<List<Room>> getAll() async {
     try {
-      final pbInstance = await pb;
-      final records = await pbInstance.collection('rooms').getFullList();
+      final records = await pb.collection('rooms').getFullList();
       return records.map((record) => Room.fromJson(record.toJson())).toList();
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
@@ -24,8 +22,7 @@ class RoomRepository {
 
   Future<Room> getById(String id) async {
     try {
-      final pbInstance = await pb;
-      final record = await pbInstance.collection('rooms').getOne(id);
+      final record = await pb.collection('rooms').getOne(id);
       return Room.fromJson(record.data);
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
@@ -37,9 +34,12 @@ class RoomRepository {
 
   Future<Room> create(Room room) async {
     try {
-      final pbInstance = await pb;
-      final data = room.toJson()..remove('id');
-      final record = await pbInstance.collection('rooms').create(body: data);
+      final data =
+          room
+              .copyWith(coursePlaceId: PocketbaseHelper.getCoursePlaceId(pb))
+              .toJson()
+            ..remove('id');
+      final record = await pb.collection('rooms').create(body: data);
       return Room.fromJson(record.data);
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
@@ -51,11 +51,12 @@ class RoomRepository {
 
   Future<Room> update(String id, Room room) async {
     try {
-      final pbInstance = await pb;
-      final data = room.toJson()..remove('id');
-      final record = await pbInstance
-          .collection('rooms')
-          .update(id, body: data);
+      final data =
+          room
+              .copyWith(coursePlaceId: PocketbaseHelper.getCoursePlaceId(pb))
+              .toJson()
+            ..remove('id');
+      final record = await pb.collection('rooms').update(id, body: data);
       return Room.fromJson(record.data);
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
@@ -67,8 +68,7 @@ class RoomRepository {
 
   Future<void> delete(String id) async {
     try {
-      final pbInstance = await pb;
-      await pbInstance.collection('rooms').delete(id);
+      await pb.collection('rooms').delete(id);
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
       throw Exception(e.response['message']);
@@ -79,9 +79,40 @@ class RoomRepository {
 
   Future<int> getCount() async {
     try {
-      final pbInstance = await pb;
-      final result = await pbInstance.collection('rooms').getList(perPage: 0);
+      final result = await pb.collection('rooms').getList(perPage: 0);
       return result.totalItems;
+    } on ClientException catch (e) {
+      debugPrint(e.response.toString());
+      throw Exception(e.response['message']);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> paginate({
+    int page = 1,
+    int limit = 5,
+    String? search,
+  }) async {
+    try {
+      String? filter;
+      if (search != null && search.isNotEmpty) {
+        filter = "name ~ '$search' || coursePlaceId ~ '$search'";
+      }
+
+      final result = await pb
+          .collection('rooms')
+          .getList(page: page, perPage: limit, filter: filter);
+
+      return {
+        'items': result.items
+            .map((record) => Room.fromJson(record.toJson()))
+            .toList(),
+        'totalItems': result.totalItems,
+        'totalPages': result.totalPages,
+        'page': result.page,
+        'perPage': result.perPage,
+      };
     } on ClientException catch (e) {
       debugPrint(e.response.toString());
       throw Exception(e.response['message']);

@@ -10,6 +10,14 @@ class LoadRooms extends RoomEvent {}
 
 class LoadRoomCount extends RoomEvent {}
 
+class PaginateRooms extends RoomEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginateRooms({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadRoom extends RoomEvent {
   final String id;
   LoadRoom(this.id);
@@ -40,7 +48,27 @@ class RoomLoading extends RoomState {}
 
 class RoomsLoaded extends RoomState {
   final List<Room> rooms;
-  RoomsLoaded(this.rooms);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  RoomsLoaded(
+    this.rooms, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  RoomsLoaded.initial(this.rooms)
+    : totalItems = rooms.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = rooms.length,
+      hasMore = false;
 }
 
 class RoomLoaded extends RoomState {
@@ -65,6 +93,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   RoomBloc(this.repository) : super(RoomInitial()) {
     on<LoadRooms>(_onLoadRooms);
     on<LoadRoomCount>(_onLoadRoomCount);
+    on<PaginateRooms>(_onPaginateRooms);
     on<LoadRoom>(_onLoadRoom);
     on<CreateRoom>(_onCreateRoom);
     on<UpdateRoom>(_onUpdateRoom);
@@ -74,8 +103,44 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   Future<void> _onLoadRooms(LoadRooms event, Emitter<RoomState> emit) async {
     emit(RoomLoading());
     try {
-      final rooms = await repository.getAll();
-      emit(RoomsLoaded(rooms));
+      final result = await repository.paginate();
+      emit(
+        RoomsLoaded(
+          result['items'] as List<Room>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e, s) {
+      debugPrint('$e\n$s');
+      emit(RoomError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginateRooms(
+    PaginateRooms event,
+    Emitter<RoomState> emit,
+  ) async {
+    emit(RoomLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        RoomsLoaded(
+          result['items'] as List<Room>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e, s) {
       debugPrint('$e\n$s');
       emit(RoomError(e.toString()));

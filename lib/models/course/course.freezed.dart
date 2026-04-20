@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Course {
 
- String get id;@JsonKey(name: 'course_place') String get coursePlace; String get name; int get price; CurrencyEnum get currency;@JsonKey(name: 'is_active') bool get isActive; String? get created; String? get updated;
+ String get id;@JsonKey(name: 'course_place') String get coursePlaceId; String get name; int get price; CurrencyEnum get currency;@JsonKey(name: 'is_active') bool get isActive; String? get created; String? get updated;
 /// Create a copy of Course
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CourseCopyWith<Course> get copyWith => _$CourseCopyWithImpl<Course>(this as Cou
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Course&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlace, coursePlace) || other.coursePlace == coursePlace)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Course&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlaceId, coursePlaceId) || other.coursePlaceId == coursePlaceId)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,coursePlace,name,price,currency,isActive,created,updated);
+int get hashCode => Object.hash(runtimeType,id,coursePlaceId,name,price,currency,isActive,created,updated);
 
 @override
 String toString() {
-  return 'Course(id: $id, coursePlace: $coursePlace, name: $name, price: $price, currency: $currency, isActive: $isActive, created: $created, updated: $updated)';
+  return 'Course(id: $id, coursePlaceId: $coursePlaceId, name: $name, price: $price, currency: $currency, isActive: $isActive, created: $created, updated: $updated)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CourseCopyWith<$Res>  {
   factory $CourseCopyWith(Course value, $Res Function(Course) _then) = _$CourseCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'course_place') String coursePlace, String name, int price, CurrencyEnum currency,@JsonKey(name: 'is_active') bool isActive, String? created, String? updated
+ String id,@JsonKey(name: 'course_place') String coursePlaceId, String name, int price, CurrencyEnum currency,@JsonKey(name: 'is_active') bool isActive, String? created, String? updated
 });
 
 
@@ -65,10 +65,10 @@ class _$CourseCopyWithImpl<$Res>
 
 /// Create a copy of Course
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? coursePlace = null,Object? name = null,Object? price = null,Object? currency = null,Object? isActive = null,Object? created = freezed,Object? updated = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? coursePlaceId = null,Object? name = null,Object? price = null,Object? currency = null,Object? isActive = null,Object? created = freezed,Object? updated = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,coursePlace: null == coursePlace ? _self.coursePlace : coursePlace // ignore: cast_nullable_to_non_nullable
+as String,coursePlaceId: null == coursePlaceId ? _self.coursePlaceId : coursePlaceId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
@@ -160,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Course() when $default != null:
-return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
   return orElse();
 
 }
@@ -181,10 +181,10 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)  $default,) {final _that = this;
 switch (_that) {
 case _Course():
-return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +201,10 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  int price,  CurrencyEnum currency, @JsonKey(name: 'is_active')  bool isActive,  String? created,  String? updated)?  $default,) {final _that = this;
 switch (_that) {
 case _Course() when $default != null:
-return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.price,_that.currency,_that.isActive,_that.created,_that.updated);case _:
   return null;
 
 }
@@ -216,11 +216,11 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.price,_that.currency
 @JsonSerializable()
 
 class _Course extends Course {
-   _Course({required this.id, @JsonKey(name: 'course_place') required this.coursePlace, required this.name, required this.price, required this.currency, @JsonKey(name: 'is_active') required this.isActive, this.created, this.updated}): super._();
+   _Course({required this.id, @JsonKey(name: 'course_place') required this.coursePlaceId, required this.name, required this.price, required this.currency, @JsonKey(name: 'is_active') required this.isActive, this.created, this.updated}): super._();
   factory _Course.fromJson(Map<String, dynamic> json) => _$CourseFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'course_place') final  String coursePlace;
+@override@JsonKey(name: 'course_place') final  String coursePlaceId;
 @override final  String name;
 @override final  int price;
 @override final  CurrencyEnum currency;
@@ -241,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Course&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlace, coursePlace) || other.coursePlace == coursePlace)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Course&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlaceId, coursePlaceId) || other.coursePlaceId == coursePlaceId)&&(identical(other.name, name) || other.name == name)&&(identical(other.price, price) || other.price == price)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,coursePlace,name,price,currency,isActive,created,updated);
+int get hashCode => Object.hash(runtimeType,id,coursePlaceId,name,price,currency,isActive,created,updated);
 
 @override
 String toString() {
-  return 'Course(id: $id, coursePlace: $coursePlace, name: $name, price: $price, currency: $currency, isActive: $isActive, created: $created, updated: $updated)';
+  return 'Course(id: $id, coursePlaceId: $coursePlaceId, name: $name, price: $price, currency: $currency, isActive: $isActive, created: $created, updated: $updated)';
 }
 
 
@@ -261,7 +261,7 @@ abstract mixin class _$CourseCopyWith<$Res> implements $CourseCopyWith<$Res> {
   factory _$CourseCopyWith(_Course value, $Res Function(_Course) _then) = __$CourseCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'course_place') String coursePlace, String name, int price, CurrencyEnum currency,@JsonKey(name: 'is_active') bool isActive, String? created, String? updated
+ String id,@JsonKey(name: 'course_place') String coursePlaceId, String name, int price, CurrencyEnum currency,@JsonKey(name: 'is_active') bool isActive, String? created, String? updated
 });
 
 
@@ -278,10 +278,10 @@ class __$CourseCopyWithImpl<$Res>
 
 /// Create a copy of Course
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? coursePlace = null,Object? name = null,Object? price = null,Object? currency = null,Object? isActive = null,Object? created = freezed,Object? updated = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? coursePlaceId = null,Object? name = null,Object? price = null,Object? currency = null,Object? isActive = null,Object? created = freezed,Object? updated = freezed,}) {
   return _then(_Course(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,coursePlace: null == coursePlace ? _self.coursePlace : coursePlace // ignore: cast_nullable_to_non_nullable
+as String,coursePlaceId: null == coursePlaceId ? _self.coursePlaceId : coursePlaceId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable

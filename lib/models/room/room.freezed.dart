@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Room {
 
- String get id;@JsonKey(name: 'course_place') String get coursePlace; String get name; DateTime get created; DateTime? get updated;
+ String get id;@JsonKey(name: 'course_place') String get coursePlaceId; String get name; DateTime get created; DateTime? get updated;
 /// Create a copy of Room
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $RoomCopyWith<Room> get copyWith => _$RoomCopyWithImpl<Room>(this as Room, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Room&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlace, coursePlace) || other.coursePlace == coursePlace)&&(identical(other.name, name) || other.name == name)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Room&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlaceId, coursePlaceId) || other.coursePlaceId == coursePlaceId)&&(identical(other.name, name) || other.name == name)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,coursePlace,name,created,updated);
+int get hashCode => Object.hash(runtimeType,id,coursePlaceId,name,created,updated);
 
 @override
 String toString() {
-  return 'Room(id: $id, coursePlace: $coursePlace, name: $name, created: $created, updated: $updated)';
+  return 'Room(id: $id, coursePlaceId: $coursePlaceId, name: $name, created: $created, updated: $updated)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $RoomCopyWith<$Res>  {
   factory $RoomCopyWith(Room value, $Res Function(Room) _then) = _$RoomCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'course_place') String coursePlace, String name, DateTime created, DateTime? updated
+ String id,@JsonKey(name: 'course_place') String coursePlaceId, String name, DateTime created, DateTime? updated
 });
 
 
@@ -65,10 +65,10 @@ class _$RoomCopyWithImpl<$Res>
 
 /// Create a copy of Room
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? coursePlace = null,Object? name = null,Object? created = null,Object? updated = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? coursePlaceId = null,Object? name = null,Object? created = null,Object? updated = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,coursePlace: null == coursePlace ? _self.coursePlace : coursePlace // ignore: cast_nullable_to_non_nullable
+as String,coursePlaceId: null == coursePlaceId ? _self.coursePlaceId : coursePlaceId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,created: null == created ? _self.created : created // ignore: cast_nullable_to_non_nullable
 as DateTime,updated: freezed == updated ? _self.updated : updated // ignore: cast_nullable_to_non_nullable
@@ -157,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  DateTime created,  DateTime? updated)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  DateTime created,  DateTime? updated)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Room() when $default != null:
-return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.created,_that.updated);case _:
   return orElse();
 
 }
@@ -178,10 +178,10 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.update
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  DateTime created,  DateTime? updated)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  DateTime created,  DateTime? updated)  $default,) {final _that = this;
 switch (_that) {
 case _Room():
-return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.created,_that.updated);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +198,10 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.update
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'course_place')  String coursePlace,  String name,  DateTime created,  DateTime? updated)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'course_place')  String coursePlaceId,  String name,  DateTime created,  DateTime? updated)?  $default,) {final _that = this;
 switch (_that) {
 case _Room() when $default != null:
-return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.updated);case _:
+return $default(_that.id,_that.coursePlaceId,_that.name,_that.created,_that.updated);case _:
   return null;
 
 }
@@ -213,11 +213,11 @@ return $default(_that.id,_that.coursePlace,_that.name,_that.created,_that.update
 @JsonSerializable()
 
 class _Room extends Room {
-   _Room({required this.id, @JsonKey(name: 'course_place') required this.coursePlace, required this.name, required this.created, this.updated}): super._();
+   _Room({required this.id, @JsonKey(name: 'course_place') required this.coursePlaceId, required this.name, required this.created, this.updated}): super._();
   factory _Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'course_place') final  String coursePlace;
+@override@JsonKey(name: 'course_place') final  String coursePlaceId;
 @override final  String name;
 @override final  DateTime created;
 @override final  DateTime? updated;
@@ -235,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Room&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlace, coursePlace) || other.coursePlace == coursePlace)&&(identical(other.name, name) || other.name == name)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Room&&(identical(other.id, id) || other.id == id)&&(identical(other.coursePlaceId, coursePlaceId) || other.coursePlaceId == coursePlaceId)&&(identical(other.name, name) || other.name == name)&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,coursePlace,name,created,updated);
+int get hashCode => Object.hash(runtimeType,id,coursePlaceId,name,created,updated);
 
 @override
 String toString() {
-  return 'Room(id: $id, coursePlace: $coursePlace, name: $name, created: $created, updated: $updated)';
+  return 'Room(id: $id, coursePlaceId: $coursePlaceId, name: $name, created: $created, updated: $updated)';
 }
 
 
@@ -255,7 +255,7 @@ abstract mixin class _$RoomCopyWith<$Res> implements $RoomCopyWith<$Res> {
   factory _$RoomCopyWith(_Room value, $Res Function(_Room) _then) = __$RoomCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'course_place') String coursePlace, String name, DateTime created, DateTime? updated
+ String id,@JsonKey(name: 'course_place') String coursePlaceId, String name, DateTime created, DateTime? updated
 });
 
 
@@ -272,10 +272,10 @@ class __$RoomCopyWithImpl<$Res>
 
 /// Create a copy of Room
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? coursePlace = null,Object? name = null,Object? created = null,Object? updated = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? coursePlaceId = null,Object? name = null,Object? created = null,Object? updated = freezed,}) {
   return _then(_Room(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,coursePlace: null == coursePlace ? _self.coursePlace : coursePlace // ignore: cast_nullable_to_non_nullable
+as String,coursePlaceId: null == coursePlaceId ? _self.coursePlaceId : coursePlaceId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,created: null == created ? _self.created : created // ignore: cast_nullable_to_non_nullable
 as DateTime,updated: freezed == updated ? _self.updated : updated // ignore: cast_nullable_to_non_nullable
