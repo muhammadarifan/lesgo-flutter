@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
-import 'package:lesgo_flutter/models/invoice.dart';
+import 'package:lesgo_flutter/models/invoice/invoice.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 

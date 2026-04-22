@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' show MultipartFile;
-import 'package:lesgo_flutter/models/payment.dart';
+import 'package:lesgo_flutter/models/payment/payment.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 

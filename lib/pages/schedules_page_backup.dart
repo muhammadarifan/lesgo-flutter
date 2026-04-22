@@ -20,7 +20,7 @@ class SchedulesPage extends StatefulWidget {
 }
 
 class _SchedulesPageState extends State<SchedulesPage> {
-  DateTime _selectedDate = DateTime.now();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -96,81 +96,48 @@ class _SchedulesPageState extends State<SchedulesPage> {
           if (state is ScheduleLoading) {
             return const Center(child: FCircularProgress());
           } else if (state is SchedulesLoaded) {
-            final filteredSchedules = _filterSchedulesByDate(
-              state.schedules,
-              _selectedDate,
-            );
+            final filteredSchedules = _filterSchedules(state.schedules);
             return FScaffold(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
+                padding: const .all(16.0),
+                child: Column(
+                  crossAxisAlignment: .start,
                   children: [
-                    // Left section: Calendar
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Select Date',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          FCalendar(
-                            control: FCalendarControl.managedDate(
-                              initial: _selectedDate,
-                            ),
-                            onPress: (date) {
+                    // Header with search and add button
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FTextField(
+                            prefixBuilder: (context, style, variants) =>
+                                Padding(
+                                  padding: const .only(left: 16.0, right: 8.0),
+                                  child: const Icon(FIcons.search),
+                                ),
+                            onSubmit: (value) {
                               setState(() {
-                                _selectedDate = date;
+                                _searchQuery = value;
                               });
                             },
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Right section: Schedules list for selected date
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Schedules for ${_formatDate(_selectedDate)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              FButton(
-                                onPress: () => showFPersistentSheet(
-                                  context: context,
-                                  style: const .delta(flingVelocity: 700),
-                                  side: .rtl,
-                                  builder: (context, controller) =>
-                                      _buildScheduleForm(
-                                        controller: controller,
-                                      ),
-                                ),
-                                suffix: const Icon(Icons.add),
-                                child: const Text('Add Schedule'),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(width: 16),
+                        FButton(
+                          onPress: () => showFPersistentSheet(
+                            context: context,
+                            style: const .delta(flingVelocity: 700),
+                            side: .rtl,
+                            builder: (context, controller) =>
+                                _buildScheduleForm(controller: controller),
                           ),
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: _buildSchedulesList(filteredSchedules),
-                          ),
-                        ],
-                      ),
+                          suffix: const Icon(Icons.add),
+                          child: const Text('Add Schedule'),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+
+                    // Schedules list
+                    Expanded(child: _buildSchedulesList(filteredSchedules)),
                   ],
                 ),
               ),
@@ -185,15 +152,23 @@ class _SchedulesPageState extends State<SchedulesPage> {
     );
   }
 
-  List<Schedule> _filterSchedulesByDate(
-    List<Schedule> schedules,
-    DateTime date,
-  ) {
+  List<Schedule> _filterSchedules(List<Schedule> schedules) {
     return schedules.where((schedule) {
-      return schedule.date.year == date.year &&
-          schedule.date.month == date.month &&
-          schedule.date.day == date.day;
-    }).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
+      return [
+        schedule.course?.name.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ??
+            false,
+        schedule.tutor?.name.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ??
+            false,
+        schedule.students.any(
+          (student) =>
+              student.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+        ),
+      ].any((element) => element);
+    }).toList();
   }
 
   Widget _buildSchedulesList(List<Schedule> schedules) {
@@ -212,7 +187,7 @@ class _SchedulesPageState extends State<SchedulesPage> {
           ),
           title: Text('Schedule ${schedule.course?.name}'),
           subtitle: Text(
-            '${_formatTime(schedule.startTime)} - ${_formatTime(schedule.endTime)}',
+            '${_formatDate(schedule.date)} ${_formatTime(schedule.startTime)} - ${_formatTime(schedule.endTime)}',
           ),
           suffix: Row(
             mainAxisSize: MainAxisSize.min,
@@ -338,7 +313,7 @@ class _SchedulesPageState extends State<SchedulesPage> {
                 builder: (context, tutorState) {
                   if (tutorState is TutorsLoaded) {
                     final activeTutors = tutorState.tutors
-                        .where((t) => t.isActive ?? false)
+                        .where((t) => t.isActive)
                         .toList();
                     Tutor? selectedTutor;
                     if (tutorId.isNotEmpty) {
@@ -354,18 +329,18 @@ class _SchedulesPageState extends State<SchedulesPage> {
                     return FSelect<Tutor>.rich(
                       control: .managed(initial: selectedTutor),
                       hint: 'Select Tutor',
-                      format: (t) => t.name ?? '',
+                      format: (t) => t.name,
                       children: activeTutors
                           .map(
                             (tutor) => FSelectItem.item(
-                              title: Text(tutor.name ?? ''),
+                              title: Text(tutor.name),
                               value: tutor,
                             ),
                           )
                           .toList(),
                       validator: (value) =>
                           value == null ? 'Tutor is required' : null,
-                      onSaved: (newValue) => tutorId = newValue?.id ?? '',
+                      onSaved: (newValue) => tutorId = newValue!.id,
                     );
                   }
                   return FSelect<Tutor>.rich(
@@ -381,7 +356,7 @@ class _SchedulesPageState extends State<SchedulesPage> {
                 builder: (context, studentState) {
                   if (studentState is StudentsLoaded) {
                     final activeStudents = studentState.students
-                        .where((s) => s.isActive ?? false)
+                        .where((s) => s.isActive)
                         .toList();
                     final selectedStudents = activeStudents
                         .where((s) => studentIds.contains(s.id))
@@ -390,11 +365,11 @@ class _SchedulesPageState extends State<SchedulesPage> {
                     return FMultiSelect<Student>.rich(
                       control: .managed(initial: selectedStudents.toSet()),
                       hint: const Text('Select Students'),
-                      format: (Student student) => Text(student.name ?? ''),
+                      format: (Student student) => Text(student.name),
                       children: activeStudents
                           .map(
                             (student) => FSelectItem.item(
-                              title: Text(student.name ?? ''),
+                              title: Text(student.name),
                               value: student,
                             ),
                           )
@@ -403,7 +378,7 @@ class _SchedulesPageState extends State<SchedulesPage> {
                           ? 'At least one student is required'
                           : null,
                       onSaved: (newValue) =>
-                          studentIds = newValue.map((s) => s.id ?? '').toList(),
+                          studentIds = newValue.map((s) => s.id!).toList(),
                     );
                   }
                   return FMultiSelect<Student>.rich(

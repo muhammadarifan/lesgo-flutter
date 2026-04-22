@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lesgo_flutter/models/tutor/tutor.dart';
 import '../blocs/tutor_bloc.dart';
-import '../models/tutor.dart';
 import '../enums/gender_enum.dart';
 
 class TutorsPage extends StatefulWidget {
@@ -247,9 +247,9 @@ class _TutorsPageState extends State<TutorsPage> {
     final isEditing = tutor != null;
     final formKey = GlobalKey<FormState>();
     String name = isEditing ? tutor.name : '';
-    String email = isEditing ? tutor.email : '';
-    String phone = isEditing ? tutor.phone : '';
-    String address = isEditing ? tutor.address : '';
+    String? email = isEditing ? tutor.email : '';
+    String? phone = isEditing ? tutor.phone : '';
+    String? address = isEditing ? tutor.address : '';
     GenderEnum gender = isEditing ? tutor.gender : GenderEnum.male;
     bool isActive = isEditing ? tutor.isActive : true;
 
@@ -280,7 +280,7 @@ class _TutorsPageState extends State<TutorsPage> {
                 onSaved: (newValue) => name = newValue!,
               ),
               FTextFormField(
-                control: .managed(initial: TextEditingValue(text: email)),
+                control: .managed(initial: TextEditingValue(text: email ?? '')),
                 hint: 'Email',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
@@ -288,7 +288,7 @@ class _TutorsPageState extends State<TutorsPage> {
                 onSaved: (newValue) => email = newValue!,
               ),
               FTextFormField(
-                control: .managed(initial: TextEditingValue(text: phone)),
+                control: .managed(initial: TextEditingValue(text: phone ?? '')),
                 hint: 'Phone',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
@@ -296,7 +296,9 @@ class _TutorsPageState extends State<TutorsPage> {
                 onSaved: (newValue) => phone = newValue!,
               ),
               FTextFormField(
-                control: .managed(initial: TextEditingValue(text: address)),
+                control: .managed(
+                  initial: TextEditingValue(text: address ?? ''),
+                ),
                 hint: 'Address',
                 autovalidateMode: .onUserInteraction,
                 validator: (value) =>
@@ -350,20 +352,18 @@ class _TutorsPageState extends State<TutorsPage> {
                         final updatedTutor = isEditing
                             ? tutor.copyWith(
                                 name: name.trim(),
-                                email: email.trim(),
-                                phone: phone.trim(),
-                                address: address.trim(),
+                                email: email?.trim(),
+                                phone: phone?.trim(),
+                                address: address?.trim(),
                                 gender: gender,
                                 isActive: isActive,
                               )
-                            : Tutor(
-                                id: '',
+                            : Tutor.create(
                                 name: name.trim(),
-                                email: email.trim(),
-                                phone: phone.trim(),
-                                address: address.trim(),
+                                email: email?.trim() ?? '',
+                                phone: phone?.trim() ?? '',
+                                address: address?.trim() ?? '',
                                 gender: gender,
-                                isActive: isActive,
                               );
 
                         if (isEditing) {
@@ -426,9 +426,12 @@ class _TutorsPageState extends State<TutorsPage> {
           divider: .full,
           children: [
             .item(title: const Text('Name'), details: Text(tutor.name)),
-            .item(title: const Text('Email'), details: Text(tutor.email)),
-            .item(title: const Text('Phone'), details: Text(tutor.phone)),
-            .item(title: const Text('Address'), details: Text(tutor.address)),
+            .item(title: const Text('Email'), details: Text(tutor.email ?? '')),
+            .item(title: const Text('Phone'), details: Text(tutor.phone ?? '')),
+            .item(
+              title: const Text('Address'),
+              details: Text(tutor.address ?? ''),
+            ),
             .item(
               title: const Text('Gender'),
               details: Text(tutor.gender.displayName),

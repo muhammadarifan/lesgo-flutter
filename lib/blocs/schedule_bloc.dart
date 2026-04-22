@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/schedule.dart';
+import 'package:lesgo_flutter/models/schedule/schedule.dart';
 import 'package:lesgo_flutter/repositories/schedule_repository.dart';
 
 // Events

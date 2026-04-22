@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/invoice.dart';
+import 'package:lesgo_flutter/models/invoice/invoice.dart';
 import 'package:lesgo_flutter/repositories/invoice_repository.dart';
 
 // Events

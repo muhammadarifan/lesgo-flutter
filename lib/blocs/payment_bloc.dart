@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lesgo_flutter/models/payment.dart';
+import 'package:lesgo_flutter/models/payment/payment.dart';
 import 'package:lesgo_flutter/repositories/payment_repository.dart';
 
 // Events

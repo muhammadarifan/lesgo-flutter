@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
-import 'package:lesgo_flutter/models/schedule.dart';
+import 'package:lesgo_flutter/models/schedule/schedule.dart';
 import 'package:lesgo_flutter/services/pocketbase_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -46,11 +46,9 @@ class ScheduleRepository {
       final data =
           schedule
               .copyWith(
-                date: DateTime.tryParse(schedule.date)?.toIso8601String(),
-                startTime: DateTime.tryParse(
-                  schedule.startTime,
-                )?.toIso8601String(),
-                endTime: DateTime.tryParse(schedule.endTime)?.toIso8601String(),
+                date: schedule.date,
+                startTime: schedule.startTime,
+                endTime: schedule.endTime,
               )
               .toJson()
             ..remove('id');
@@ -73,11 +71,9 @@ class ScheduleRepository {
       final data =
           schedule
               .copyWith(
-                date: DateTime.tryParse(schedule.date)?.toIso8601String(),
-                startTime: DateTime.tryParse(
-                  schedule.startTime,
-                )?.toIso8601String(),
-                endTime: DateTime.tryParse(schedule.endTime)?.toIso8601String(),
+                date: schedule.date,
+                startTime: schedule.startTime,
+                endTime: schedule.endTime,
               )
               .toJson()
             ..remove('id');

@@ -4,11 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lesgo_flutter/models/course/course.dart';
+import 'package:lesgo_flutter/models/invoice/invoice.dart';
+import 'package:lesgo_flutter/models/student/student.dart';
 import '../blocs/invoice_bloc.dart';
 import '../blocs/student_bloc.dart';
 import '../blocs/course_bloc.dart';
-import '../models/invoice.dart';
-import '../models/student.dart';
 import '../enums/invoice_status_enum.dart';
 
 class InvoicesPage extends StatefulWidget {
@@ -269,14 +269,14 @@ class _InvoicesPageState extends State<InvoicesPage> {
         return FItem(
           prefix: FAvatar.raw(
             child: Text(
-              invoice.studentObject?.name.isNotEmpty == true
-                  ? invoice.studentObject!.name[0].toUpperCase()
+              invoice.student?.name.isNotEmpty == true
+                  ? invoice.student!.name[0].toUpperCase()
                   : 'I',
             ),
           ),
-          title: Text(invoice.studentObject?.name ?? 'Invoice ${invoice.id}'),
+          title: Text(invoice.student?.name ?? 'Invoice ${invoice.id}'),
           subtitle: Text(
-            'Status: ${invoice.status?.displayName ?? 'Unknown'} • Due: ${invoice.dueDate != null ? _formatDate(invoice.dueDate!) : 'No due date'} • Total: ${invoice.totalAmount} ${invoice.currency?.displayName ?? ''}',
+            'Status: ${invoice.status.displayName} • Due: ${_formatDate(invoice.dueDate)} • Total: ${invoice.totalPrice} ${invoice.currency?.displayName ?? ''}',
           ),
           suffix: Row(
             mainAxisSize: MainAxisSize.min,
@@ -321,13 +321,12 @@ class _InvoicesPageState extends State<InvoicesPage> {
     final isEditing = invoice != null;
     final formKey = GlobalKey<FormState>();
     String? studentId = isEditing ? invoice.studentId : null;
-    List<String> courseIds = isEditing ? (invoice.courseIds ?? []) : [];
+    List<String> courseIds = isEditing ? (invoice.courseIds) : [];
     DateTime? period = isEditing ? invoice.period : null;
     InvoiceStatusEnum? status = isEditing
         ? invoice.status
         : InvoiceStatusEnum.unpaid;
     DateTime? dueDate = isEditing ? invoice.dueDate : null;
-    bool? isActive = isEditing ? invoice.isActive : true;
 
     return FSheets(
       child: Container(
@@ -479,28 +478,6 @@ class _InvoicesPageState extends State<InvoicesPage> {
                 hint: 'Select Due Date',
                 onSaved: (newValue) => dueDate = newValue,
               ),
-              FSelect<bool>.rich(
-                control: .managed(initial: isActive),
-                hint: 'Select status',
-                format: (s) => s ? 'Active' : 'Inactive',
-                children: [
-                  .item(title: const Text('Active'), value: true),
-                  .item(title: const Text('Inactive'), value: false),
-                ],
-                validator: (value) =>
-                    value == null ? 'Status is required' : null,
-                onSaved: (newValue) => isActive = newValue!,
-              ),
-              FSelect<bool>.rich(
-                control: .managed(initial: isActive),
-                hint: 'Select status',
-                format: (s) => s ? 'Active' : 'Inactive',
-                children: [
-                  .item(title: const Text('Active'), value: true),
-                  .item(title: const Text('Inactive'), value: false),
-                ],
-                onSaved: (newValue) => isActive = newValue!,
-              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -523,21 +500,18 @@ class _InvoicesPageState extends State<InvoicesPage> {
 
                         final updatedInvoice = isEditing
                             ? invoice.copyWith(
-                                studentId: studentId,
+                                studentId: studentId!,
                                 courseIds: courseIds,
-                                period: period,
-                                status: status,
-                                dueDate: dueDate,
-                                isActive: isActive,
+                                period: period!,
+                                status: status!,
+                                dueDate: dueDate!,
                               )
-                            : Invoice(
-                                id: '',
-                                studentId: studentId,
+                            : Invoice.create(
+                                studentId: studentId!,
                                 courseIds: courseIds,
-                                period: period,
-                                status: status,
-                                dueDate: dueDate,
-                                isActive: isActive,
+                                period: period!,
+                                status: status!,
+                                dueDate: dueDate!,
                               );
 
                         if (isEditing) {
@@ -577,10 +551,9 @@ class _InvoicesPageState extends State<InvoicesPage> {
           .getAll();
       final currentMonthInvoices = existingInvoices
           .where(
-            (invoice) =>
-                invoice.period != null &&
-                invoice.period!.year == now.year &&
-                invoice.period!.month == now.month,
+            (Invoice invoice) =>
+                invoice.period.year == now.year &&
+                invoice.period.month == now.month,
           )
           .toList();
 
@@ -701,9 +674,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
         final currentMonthInvoices = existingInvoices
             .where(
               (invoice) =>
-                  invoice.period != null &&
-                  invoice.period!.year == currentMonth.year &&
-                  invoice.period!.month == currentMonth.month,
+                  invoice.period.year == currentMonth.year &&
+                  invoice.period.month == currentMonth.month,
             )
             .toList();
 
@@ -720,16 +692,12 @@ class _InvoicesPageState extends State<InvoicesPage> {
         // In a real app, you might want to filter based on student's enrolled courses
         final courseIds = activeCourses.map((c) => c.id).toList();
 
-        final invoice = Invoice(
-          id: '',
-          studentId: student.id,
+        final invoice = Invoice.create(
+          studentId: student.id!,
           courseIds: courseIds,
           period: currentMonth,
           status: InvoiceStatusEnum.unpaid,
-          dueDate: nextMonth.subtract(
-            const Duration(days: 1),
-          ), // Due at end of month
-          isActive: true,
+          dueDate: nextMonth.subtract(const Duration(days: 1)),
         );
 
         // ignore: use_build_context_synchronously
@@ -767,7 +735,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
       builder: (context, style, animation) => FDialog(
         title: const Text('Delete Invoice'),
         body: Text(
-          'Are you sure you want to delete invoice for "${invoice.studentObject?.name ?? invoice.id}"?',
+          'Are you sure you want to delete invoice for "${invoice.student?.name ?? invoice.id}"?',
         ),
         actions: [
           FButton(
@@ -801,53 +769,37 @@ class _InvoicesPageState extends State<InvoicesPage> {
             .item(title: const Text('ID'), details: Text(invoice.id)),
             .item(
               title: const Text('Student'),
-              details: Text(invoice.studentObject?.name ?? 'No student'),
+              details: Text(invoice.student?.name ?? 'No student'),
             ),
             .item(
               title: const Text('Courses'),
               details: Text(
-                invoice.courseObjects.isNotEmpty
-                    ? invoice.courseObjects.map((c) => c.name).join(', ')
+                invoice.courses.isNotEmpty
+                    ? invoice.courses.map((c) => c.name).join(', ')
                     : 'No courses',
               ),
             ),
             .item(
               title: const Text('Total Amount'),
               details: Text(
-                '${invoice.totalAmount} ${invoice.currency?.displayName ?? ''}',
+                '${invoice.totalPrice} ${invoice.currency?.displayName ?? ''}',
               ),
             ),
             .item(
               title: const Text('Period'),
-              details: Text(
-                invoice.period != null
-                    ? _formatDate(invoice.period!)
-                    : 'No period',
-              ),
+              details: Text(_formatDate(invoice.period)),
             ),
             .item(
               title: const Text('Status'),
-              details: Text(invoice.status?.displayName ?? 'Unknown'),
+              details: Text(invoice.status.displayName),
             ),
             .item(
               title: const Text('Due Date'),
-              details: Text(
-                invoice.dueDate != null
-                    ? _formatDate(invoice.dueDate!)
-                    : 'No due date',
-              ),
-            ),
-            .item(
-              title: const Text('Active'),
-              details: Text(invoice.isActive == true ? 'Yes' : 'No'),
+              details: Text(_formatDate(invoice.dueDate)),
             ),
             .item(
               title: const Text('Created'),
-              details: Text(
-                invoice.created != null
-                    ? _formatDateTime(invoice.created!)
-                    : 'Unknown',
-              ),
+              details: Text(_formatDateTime(invoice.created)),
             ),
             .item(
               title: const Text('Updated'),

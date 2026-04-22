@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:lesgo_flutter/models/student/student.dart';
 import 'package:universal_html/html.dart' as html;
 import '../blocs/student_bloc.dart';
-import '../models/student.dart';
 import '../enums/gender_enum.dart';
 import '../helpers/excel_helper.dart';
 
@@ -220,7 +220,7 @@ class _StudentsPageState extends State<StudentsPage> {
                 onChange: (value) {
                   context.read<StudentBloc>().add(
                     UpdateStudent(
-                      student.id,
+                      student.id!,
                       student.copyWith(isActive: value),
                     ),
                   );
@@ -342,16 +342,11 @@ class _StudentsPageState extends State<StudentsPage> {
                                 gender: gender,
                                 isActive: isActive,
                               )
-                            : Student(
-                                id: '',
-                                name: name.trim(),
-                                gender: gender,
-                                isActive: isActive,
-                              );
+                            : Student.create(name: name.trim(), gender: gender);
 
                         if (isEditing) {
                           context.read<StudentBloc>().add(
-                            UpdateStudent(updatedStudent.id, updatedStudent),
+                            UpdateStudent(updatedStudent.id!, updatedStudent),
                           );
                         } else {
                           context.read<StudentBloc>().add(
@@ -387,7 +382,7 @@ class _StudentsPageState extends State<StudentsPage> {
           ),
           FButton(
             onPress: () {
-              context.read<StudentBloc>().add(DeleteStudent(student.id));
+              context.read<StudentBloc>().add(DeleteStudent(student.id!));
               context.pop();
             },
             variant: .destructive,

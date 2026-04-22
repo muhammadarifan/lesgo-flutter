@@ -4,10 +4,10 @@ import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:lesgo_flutter/models/invoice/invoice.dart';
+import 'package:lesgo_flutter/models/payment/payment.dart';
 import '../blocs/payment_bloc.dart';
 import '../blocs/invoice_bloc.dart';
-import '../models/payment.dart';
-import '../models/invoice.dart';
 import '../enums/currency_enum.dart';
 import '../enums/payment_method_enum.dart';
 
@@ -266,7 +266,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           ),
           title: Text('Payment ${payment.id}'),
           subtitle: Text(
-            '${payment.currency?.displayName ?? 'Unknown'} ${_formatPrice(payment.amountPaid ?? 0)} • ${payment.method?.displayName ?? 'Unknown'}',
+            '${payment.currency.displayName} ${_formatPrice(payment.amountPaid)} • ${payment.method.displayName}',
           ),
           suffix: Row(
             mainAxisSize: MainAxisSize.min,
@@ -311,7 +311,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
     final isEditing = payment != null;
     final formKey = GlobalKey<FormState>();
     String? invoiceId = isEditing ? payment.invoiceId : null;
-    double? amountPaid = isEditing ? payment.amountPaid : null;
+    int? amountPaid = isEditing ? payment.amountPaid : null;
     CurrencyEnum? currency = isEditing ? payment.currency : CurrencyEnum.idr;
     DateTime? paymentDate = isEditing ? payment.paymentDate : null;
     PaymentMethodEnum? method = isEditing ? payment.method : null;
@@ -349,7 +349,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       );
                     } else if (invoiceState is InvoicesLoaded) {
                       final activeInvoices = invoiceState.invoices
-                          .where((i) => i.isActive == true)
+                          .where((i) => i.dueDate.isAfter(DateTime.now()))
                           .toList();
                       Invoice? selectedInvoice;
                       if (invoiceId != null && invoiceId!.isNotEmpty) {
@@ -416,8 +416,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   autovalidateMode: .onUserInteraction,
                   validator: (value) =>
                       value!.trim().isEmpty ? 'Amount is required' : null,
-                  onSaved: (newValue) =>
-                      amountPaid = double.tryParse(newValue!),
+                  onSaved: (newValue) => amountPaid = int.tryParse(newValue!),
                 ),
                 FSelect<CurrencyEnum>.rich(
                   control: .managed(initial: currency),
@@ -517,21 +516,19 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
                           final updatedPayment = isEditing
                               ? payment.copyWith(
-                                  invoiceId: invoiceId,
-                                  amountPaid: amountPaid,
-                                  currency: currency,
-                                  paymentDate: paymentDate,
-                                  method: method,
+                                  invoiceId: invoiceId!,
+                                  amountPaid: amountPaid!,
+                                  currency: currency!,
+                                  paymentDate: paymentDate!,
+                                  method: method!,
                                   proof: null,
                                 )
-                              : Payment(
-                                  id: '',
-                                  invoiceId: invoiceId,
-                                  amountPaid: amountPaid,
-                                  currency: currency,
-                                  paymentDate: paymentDate,
-                                  method: method,
-                                  proof: null,
+                              : Payment.create(
+                                  invoiceId: invoiceId!,
+                                  amountPaid: amountPaid!,
+                                  currency: currency!,
+                                  paymentDate: paymentDate!,
+                                  method: method!,
                                 );
 
                           if (isEditing) {
@@ -606,31 +603,25 @@ class _PaymentsPageState extends State<PaymentsPage> {
             .item(title: const Text('ID'), details: Text(payment.id)),
             .item(
               title: const Text('Invoice ID'),
-              details: Text(payment.invoiceId ?? 'No invoice'),
+              details: Text(payment.invoiceId),
             ),
             .item(
               title: const Text('Amount Paid'),
               details: Text(
-                payment.amountPaid != null
-                    ? '${payment.currency?.displayName ?? 'Unknown'} ${_formatPrice(payment.amountPaid!)}'
-                    : 'No amount',
+                '${payment.currency.displayName} ${_formatPrice(payment.amountPaid)}',
               ),
             ),
             .item(
               title: const Text('Currency'),
-              details: Text(payment.currency?.displayName ?? 'Unknown'),
+              details: Text(payment.currency.displayName),
             ),
             .item(
               title: const Text('Payment Date'),
-              details: Text(
-                payment.paymentDate != null
-                    ? _formatDate(payment.paymentDate!)
-                    : 'No payment date',
-              ),
+              details: Text(_formatDate(payment.paymentDate)),
             ),
             .item(
               title: const Text('Method'),
-              details: Text(payment.method?.displayName ?? 'Unknown'),
+              details: Text(payment.method.displayName),
             ),
             .item(
               title: const Text('Proof'),
@@ -638,11 +629,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             ),
             .item(
               title: const Text('Created'),
-              details: Text(
-                payment.created != null
-                    ? _formatDateTime(payment.created!)
-                    : 'Unknown',
-              ),
+              details: Text(_formatDateTime(payment.created)),
             ),
             .item(
               title: const Text('Updated'),
@@ -661,7 +648,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
     );
   }
 
-  String _formatPrice(double price) {
+  String _formatPrice(int price) {
     var formatter = NumberFormat('#,###', 'id_ID');
     return formatter.format(price);
   }
