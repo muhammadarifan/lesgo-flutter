@@ -9,6 +9,14 @@ class LoadStudents extends StudentEvent {}
 
 class LoadStudentCount extends StudentEvent {}
 
+class PaginateStudents extends StudentEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginateStudents({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadStudent extends StudentEvent {
   final String id;
   LoadStudent(this.id);
@@ -49,7 +57,27 @@ class StudentLoading extends StudentState {}
 
 class StudentsLoaded extends StudentState {
   final List<Student> students;
-  StudentsLoaded(this.students);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  StudentsLoaded(
+    this.students, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  StudentsLoaded.initial(this.students)
+    : totalItems = students.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = students.length,
+      hasMore = false;
 }
 
 class StudentLoaded extends StudentState {
@@ -81,6 +109,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
   StudentBloc(this.repository) : super(StudentInitial()) {
     on<LoadStudents>(_onLoadStudents);
     on<LoadStudentCount>(_onLoadStudentCount);
+    on<PaginateStudents>(_onPaginateStudents);
     on<LoadStudent>(_onLoadStudent);
     on<CreateStudent>(_onCreateStudent);
     on<UpdateStudent>(_onUpdateStudent);
@@ -95,8 +124,43 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
   ) async {
     emit(StudentLoading());
     try {
-      final students = await repository.getAll();
-      emit(StudentsLoaded(students));
+      final result = await repository.paginate();
+      emit(
+        StudentsLoaded(
+          result['items'] as List<Student>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e) {
+      emit(StudentError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginateStudents(
+    PaginateStudents event,
+    Emitter<StudentState> emit,
+  ) async {
+    emit(StudentLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        StudentsLoaded(
+          result['items'] as List<Student>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e) {
       emit(StudentError(e.toString()));
     }

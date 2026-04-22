@@ -9,6 +9,14 @@ class LoadTutors extends TutorEvent {}
 
 class LoadTutorCount extends TutorEvent {}
 
+class PaginateTutors extends TutorEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginateTutors({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadTutor extends TutorEvent {
   final String id;
   LoadTutor(this.id);
@@ -39,7 +47,27 @@ class TutorLoading extends TutorState {}
 
 class TutorsLoaded extends TutorState {
   final List<Tutor> tutors;
-  TutorsLoaded(this.tutors);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  TutorsLoaded(
+    this.tutors, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  TutorsLoaded.initial(this.tutors)
+    : totalItems = tutors.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = tutors.length,
+      hasMore = false;
 }
 
 class TutorLoaded extends TutorState {
@@ -64,6 +92,7 @@ class TutorBloc extends Bloc<TutorEvent, TutorState> {
   TutorBloc(this.repository) : super(TutorInitial()) {
     on<LoadTutors>(_onLoadTutors);
     on<LoadTutorCount>(_onLoadTutorCount);
+    on<PaginateTutors>(_onPaginateTutors);
     on<LoadTutor>(_onLoadTutor);
     on<CreateTutor>(_onCreateTutor);
     on<UpdateTutor>(_onUpdateTutor);
@@ -73,8 +102,43 @@ class TutorBloc extends Bloc<TutorEvent, TutorState> {
   Future<void> _onLoadTutors(LoadTutors event, Emitter<TutorState> emit) async {
     emit(TutorLoading());
     try {
-      final tutors = await repository.getAll();
-      emit(TutorsLoaded(tutors));
+      final result = await repository.paginate();
+      emit(
+        TutorsLoaded(
+          result['items'] as List<Tutor>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e) {
+      emit(TutorError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginateTutors(
+    PaginateTutors event,
+    Emitter<TutorState> emit,
+  ) async {
+    emit(TutorLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        TutorsLoaded(
+          result['items'] as List<Tutor>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e) {
       emit(TutorError(e.toString()));
     }

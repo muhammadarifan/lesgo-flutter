@@ -127,4 +127,37 @@ class StudentRepository {
       throw Exception(e.toString());
     }
   }
+
+  Future<Map<String, dynamic>> paginate({
+    int page = 1,
+    int limit = 5,
+    String? search,
+  }) async {
+    try {
+      final pbInstance = await pb;
+      String? filter;
+      if (search != null && search.isNotEmpty) {
+        filter = "name ~ '$search'";
+      }
+
+      final result = await pbInstance
+          .collection('students')
+          .getList(page: page, perPage: limit, filter: filter);
+
+      return {
+        'items': result.items
+            .map((record) => Student.fromJson(record.toJson()))
+            .toList(),
+        'totalItems': result.totalItems,
+        'totalPages': result.totalPages,
+        'page': result.page,
+        'perPage': result.perPage,
+      };
+    } on ClientException catch (e) {
+      debugPrint(e.response.toString());
+      throw Exception(e.response['message']);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }

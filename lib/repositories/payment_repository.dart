@@ -143,4 +143,42 @@ class PaymentRepository {
       throw Exception(e.toString());
     }
   }
+
+  Future<Map<String, dynamic>> paginate({
+    int page = 1,
+    int limit = 5,
+    String? search,
+  }) async {
+    try {
+      String? filter;
+      if (search != null && search.isNotEmpty) {
+        filter = "id ~ '$search' || method ~ '$search' || currency ~ '$search'";
+      }
+
+      final pbInstance = await pb;
+      final result = await pbInstance
+          .collection('payments')
+          .getList(
+            page: page,
+            perPage: limit,
+            filter: filter,
+            expand: 'invoice',
+          );
+
+      return {
+        'items': result.items
+            .map((record) => Payment.fromJson(record.toJson()))
+            .toList(),
+        'totalItems': result.totalItems,
+        'totalPages': result.totalPages,
+        'page': result.page,
+        'perPage': result.perPage,
+      };
+    } on ClientException catch (e) {
+      debugPrint(e.response.toString());
+      throw Exception(e.response['message']);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }

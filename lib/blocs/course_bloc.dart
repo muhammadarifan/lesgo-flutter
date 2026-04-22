@@ -8,6 +8,14 @@ abstract class CourseEvent {}
 
 class LoadCourses extends CourseEvent {}
 
+class PaginateCourses extends CourseEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginateCourses({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadCourseCount extends CourseEvent {}
 
 class LoadCourse extends CourseEvent {
@@ -40,7 +48,27 @@ class CourseLoading extends CourseState {}
 
 class CoursesLoaded extends CourseState {
   final List<Course> courses;
-  CoursesLoaded(this.courses);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  CoursesLoaded(
+    this.courses, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  CoursesLoaded.initial(this.courses)
+    : totalItems = courses.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = courses.length,
+      hasMore = false;
 }
 
 class CourseLoaded extends CourseState {
@@ -64,6 +92,7 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
 
   CourseBloc(this.repository) : super(CourseInitial()) {
     on<LoadCourses>(_onLoadCourses);
+    on<PaginateCourses>(_onPaginateCourses);
     on<LoadCourseCount>(_onLoadCourseCount);
     on<LoadCourse>(_onLoadCourse);
     on<CreateCourse>(_onCreateCourse);
@@ -77,8 +106,44 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
   ) async {
     emit(CourseLoading());
     try {
-      final courses = await repository.getAll();
-      emit(CoursesLoaded(courses));
+      final result = await repository.paginate();
+      emit(
+        CoursesLoaded(
+          result['items'] as List<Course>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e, s) {
+      debugPrint('$e\n$s');
+      emit(CourseError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginateCourses(
+    PaginateCourses event,
+    Emitter<CourseState> emit,
+  ) async {
+    emit(CourseLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        CoursesLoaded(
+          result['items'] as List<Course>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e, s) {
       debugPrint('$e\n$s');
       emit(CourseError(e.toString()));

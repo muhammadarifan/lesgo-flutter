@@ -8,6 +8,14 @@ abstract class InvoiceEvent {}
 
 class LoadInvoices extends InvoiceEvent {}
 
+class PaginateInvoices extends InvoiceEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginateInvoices({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadInvoiceCount extends InvoiceEvent {}
 
 class LoadInvoice extends InvoiceEvent {
@@ -40,7 +48,27 @@ class InvoiceLoading extends InvoiceState {}
 
 class InvoicesLoaded extends InvoiceState {
   final List<Invoice> invoices;
-  InvoicesLoaded(this.invoices);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  InvoicesLoaded(
+    this.invoices, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  InvoicesLoaded.initial(this.invoices)
+    : totalItems = invoices.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = invoices.length,
+      hasMore = false;
 }
 
 class InvoiceLoaded extends InvoiceState {
@@ -64,6 +92,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
 
   InvoiceBloc(this.repository) : super(InvoiceInitial()) {
     on<LoadInvoices>(_onLoadInvoices);
+    on<PaginateInvoices>(_onPaginateInvoices);
     on<LoadInvoiceCount>(_onLoadInvoiceCount);
     on<LoadInvoice>(_onLoadInvoice);
     on<CreateInvoice>(_onCreateInvoice);
@@ -77,8 +106,44 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   ) async {
     emit(InvoiceLoading());
     try {
-      final invoices = await repository.getAll();
-      emit(InvoicesLoaded(invoices));
+      final result = await repository.paginate();
+      emit(
+        InvoicesLoaded(
+          result['items'] as List<Invoice>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e, s) {
+      debugPrint('$e\n$s');
+      emit(InvoiceError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginateInvoices(
+    PaginateInvoices event,
+    Emitter<InvoiceState> emit,
+  ) async {
+    emit(InvoiceLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        InvoicesLoaded(
+          result['items'] as List<Invoice>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e, s) {
       debugPrint('$e\n$s');
       emit(InvoiceError(e.toString()));

@@ -19,14 +19,41 @@ class PaymentsPage extends StatefulWidget {
 }
 
 class _PaymentsPageState extends State<PaymentsPage> {
-  String _searchQuery = '';
   final List<FPersistentSheetController> _controllers = [];
+  FPaginationController? _paginationController;
+  String? _currentSearch;
+  int _perPage = 10;
+  late final FSelectController<int> _perPageController;
 
   @override
   void initState() {
     super.initState();
+    _paginationController = FPaginationController(pages: 1, page: 0);
+    _paginationController!.addListener(_onPageChange);
+    _perPageController = FSelectController<int>(value: _perPage);
+    _perPageController.addListener(_onPerPageChange);
     context.read<PaymentBloc>().add(LoadPayments());
     context.read<InvoiceBloc>().add(LoadInvoices());
+  }
+
+  void _onPageChange() {
+    final page = _paginationController!.value + 1;
+    context.read<PaymentBloc>().add(
+      PaginatePayments(page: page, limit: _perPage, search: _currentSearch),
+    );
+  }
+
+  void _onPerPageChange() {
+    final newValue = _perPageController.value;
+    if (newValue != null && newValue != _perPage) {
+      setState(() {
+        _perPage = newValue;
+        _paginationController?.value = 0; // Reset to first page
+      });
+      context.read<PaymentBloc>().add(
+        PaginatePayments(page: 1, limit: _perPage, search: _currentSearch),
+      );
+    }
   }
 
   @override
@@ -34,6 +61,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
     for (final controller in _controllers) {
       controller.dispose();
     }
+    _paginationController?.dispose();
+    _perPageController.dispose();
     super.dispose();
   }
 
@@ -76,8 +105,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
           if (state is PaymentLoading) {
             return const Center(child: FCircularProgress());
           } else if (state is PaymentsLoaded) {
-            final filteredPayments = _filter(state.payments);
-
             return FScaffold(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -99,8 +126,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                 ),
                             onSubmit: (value) {
                               setState(() {
-                                _searchQuery = value;
+                                _currentSearch = value.isEmpty ? null : value;
+                                _paginationController?.value = 0;
                               });
+                              context.read<PaymentBloc>().add(
+                                PaginatePayments(
+                                  page: 1,
+                                  limit: _perPage,
+                                  search: value.isEmpty ? null : value,
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -121,7 +156,85 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     const SizedBox(height: 16),
 
                     // Payments list
-                    Expanded(child: _buildPaymentsList(filteredPayments)),
+                    Expanded(child: _buildPaymentsList(state)),
+
+                    // Pagination (outside BlocBuilder)
+                    if (_paginationController != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Per page selector
+                            SizedBox(
+                              width: 140,
+                              child: FSelect<int>.rich(
+                                control: .managed(
+                                  controller: _perPageController,
+                                ),
+                                format: (value) => '$value per page',
+                                children: [
+                                  .item(
+                                    title: const Text('5 per page'),
+                                    value: 5,
+                                  ),
+                                  .item(
+                                    title: const Text('10 per page'),
+                                    value: 10,
+                                  ),
+                                  .item(
+                                    title: const Text('25 per page'),
+                                    value: 25,
+                                  ),
+                                  .item(
+                                    title: const Text('50 per page'),
+                                    value: 50,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Pagination
+                            Expanded(
+                              child: FPagination(
+                                control: .managed(
+                                  controller: _paginationController!,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // BlocListener for side effects
+                    BlocListener<PaymentBloc, PaymentState>(
+                      listener: (context, state) {
+                        if (state is PaymentError) {
+                          showFToast(
+                            context: context,
+                            variant: .destructive,
+                            icon: Icon(FIcons.circleX),
+                            title: Text('Error'),
+                            description: Text(state.message),
+                          );
+                        } else if (state is PaymentsLoaded) {
+                          if (_paginationController == null ||
+                              _paginationController!.pages !=
+                                  state.totalPages) {
+                            _paginationController?.dispose();
+                            _paginationController = FPaginationController(
+                              pages: state.totalPages,
+                              page: state.currentPage - 1,
+                            );
+                            _paginationController!.addListener(_onPageChange);
+                          } else {
+                            _paginationController?.value =
+                                state.currentPage - 1;
+                          }
+                        }
+                      },
+                      child: const SizedBox.shrink(),
+                    ),
                   ],
                 ),
               ),
@@ -136,25 +249,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
     );
   }
 
-  List<Payment> _filter(List<Payment> payments) {
-    final filteredPayments = payments.where((payment) {
-      return [
-        payment.id.toLowerCase().contains(_searchQuery.toLowerCase()),
-        payment.method?.displayName.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ??
-            false,
-        payment.currency?.displayName.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ??
-            false,
-      ].any((element) => element);
-    }).toList();
-
-    return filteredPayments;
-  }
-
-  Widget _buildPaymentsList(List<Payment> payments) {
+  Widget _buildPaymentsList(PaymentsLoaded state) {
+    final payments = state.payments;
     if (payments.isEmpty) {
       return const Center(child: Text('No payments found'));
     }

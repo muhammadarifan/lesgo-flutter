@@ -10,6 +10,14 @@ abstract class PaymentEvent {}
 
 class LoadPayments extends PaymentEvent {}
 
+class PaginatePayments extends PaymentEvent {
+  final int page;
+  final int limit;
+  final String? search;
+
+  PaginatePayments({this.page = 1, this.limit = 5, this.search});
+}
+
 class LoadPaymentCount extends PaymentEvent {}
 
 class LoadPayment extends PaymentEvent {
@@ -51,7 +59,27 @@ class PaymentLoading extends PaymentState {}
 
 class PaymentsLoaded extends PaymentState {
   final List<Payment> payments;
-  PaymentsLoaded(this.payments);
+  final int totalItems;
+  final int totalPages;
+  final int currentPage;
+  final int perPage;
+  final bool hasMore;
+
+  PaymentsLoaded(
+    this.payments, {
+    required this.totalItems,
+    required this.totalPages,
+    required this.currentPage,
+    required this.perPage,
+    required this.hasMore,
+  });
+
+  PaymentsLoaded.initial(this.payments)
+    : totalItems = payments.length,
+      totalPages = 1,
+      currentPage = 1,
+      perPage = payments.length,
+      hasMore = false;
 }
 
 class PaymentLoaded extends PaymentState {
@@ -75,6 +103,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
 
   PaymentBloc(this.repository) : super(PaymentInitial()) {
     on<LoadPayments>(_onLoadPayments);
+    on<PaginatePayments>(_onPaginatePayments);
     on<LoadPaymentCount>(_onLoadPaymentCount);
     on<LoadPayment>(_onLoadPayment);
     on<CreatePayment>(_onCreatePayment);
@@ -88,8 +117,44 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   ) async {
     emit(PaymentLoading());
     try {
-      final payments = await repository.getAll();
-      emit(PaymentsLoaded(payments));
+      final result = await repository.paginate();
+      emit(
+        PaymentsLoaded(
+          result['items'] as List<Payment>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
+    } catch (e, s) {
+      debugPrint('$e\n$s');
+      emit(PaymentError(e.toString()));
+    }
+  }
+
+  Future<void> _onPaginatePayments(
+    PaginatePayments event,
+    Emitter<PaymentState> emit,
+  ) async {
+    emit(PaymentLoading());
+    try {
+      final result = await repository.paginate(
+        page: event.page,
+        limit: event.limit,
+        search: event.search,
+      );
+      emit(
+        PaymentsLoaded(
+          result['items'] as List<Payment>,
+          totalItems: result['totalItems'] as int,
+          totalPages: result['totalPages'] as int,
+          currentPage: result['page'] as int,
+          perPage: result['perPage'] as int,
+          hasMore: (result['page'] as int) < (result['totalPages'] as int),
+        ),
+      );
     } catch (e, s) {
       debugPrint('$e\n$s');
       emit(PaymentError(e.toString()));
