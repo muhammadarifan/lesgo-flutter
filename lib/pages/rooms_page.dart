@@ -16,23 +16,37 @@ class _RoomsPageState extends State<RoomsPage> {
   final List<FPersistentSheetController> _controllers = [];
   FPaginationController? _paginationController;
   String? _currentSearch;
+  int _perPage = 10;
+  late final FSelectController<int> _perPageController;
 
   @override
   void initState() {
     super.initState();
-    _paginationController = FPaginationController(
-      pages: 1,
-      page: 0,
-    ); // 0-based indexing
+    _paginationController = FPaginationController(pages: 1, page: 0);
     _paginationController!.addListener(_onPageChange);
+    _perPageController = FSelectController<int>(value: _perPage);
+    _perPageController.addListener(_onPerPageChange);
     context.read<RoomBloc>().add(LoadRooms());
   }
 
   void _onPageChange() {
     final page = _paginationController!.value + 1;
     context.read<RoomBloc>().add(
-      PaginateRooms(page: page, limit: 5, search: _currentSearch),
+      PaginateRooms(page: page, limit: _perPage, search: _currentSearch),
     );
+  }
+
+  void _onPerPageChange() {
+    final newValue = _perPageController.value;
+    if (newValue != null && newValue != _perPage) {
+      setState(() {
+        _perPage = newValue;
+        _paginationController?.value = 0; // Reset to first page
+      });
+      context.read<RoomBloc>().add(
+        PaginateRooms(page: 1, limit: _perPage, search: _currentSearch),
+      );
+    }
   }
 
   @override
@@ -41,6 +55,7 @@ class _RoomsPageState extends State<RoomsPage> {
       controller.dispose();
     }
     _paginationController?.dispose();
+    _perPageController.dispose();
     super.dispose();
   }
 
@@ -48,9 +63,9 @@ class _RoomsPageState extends State<RoomsPage> {
   Widget build(BuildContext context) {
     return FScaffold(
       child: Padding(
-        padding: const .all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header with search and add button
             Row(
@@ -69,28 +84,15 @@ class _RoomsPageState extends State<RoomsPage> {
                       context.read<RoomBloc>().add(
                         PaginateRooms(
                           page: 1,
-                          limit: 5,
+                          limit: _perPage,
                           search: value.isEmpty ? null : value,
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
-                FButton(
-                  onPress: () => showFPersistentSheet(
-                    context: context,
-                    style: const .delta(flingVelocity: 700),
-                    side: .rtl,
-                    builder: (context, controller) =>
-                        _buildRoomForm(controller: controller),
-                  ),
-                  suffix: const Icon(Icons.add),
-                  child: const Text('Add Room'),
-                ),
               ],
             ),
-            const SizedBox(height: 16),
 
             // Rooms list
             Expanded(
@@ -111,8 +113,31 @@ class _RoomsPageState extends State<RoomsPage> {
             if (_paginationController != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: FPagination(
-                  control: .managed(controller: _paginationController!),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Per page selector
+                    SizedBox(
+                      width: 140,
+                      child: FSelect<int>.rich(
+                        control: .managed(controller: _perPageController),
+                        format: (value) => '$value per page',
+                        children: [
+                          .item(title: const Text('5 per page'), value: 5),
+                          .item(title: const Text('10 per page'), value: 10),
+                          .item(title: const Text('25 per page'), value: 25),
+                          .item(title: const Text('50 per page'), value: 50),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Pagination
+                    Expanded(
+                      child: FPagination(
+                        control: .managed(controller: _paginationController!),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
