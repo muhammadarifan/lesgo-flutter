@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:lesgo_flutter/models/course/course.dart';
 import 'package:lesgo_flutter/models/schedule/schedule.dart';
-import 'package:lesgo_flutter/models/student/student.dart';
-import 'package:lesgo_flutter/models/tutor/tutor.dart';
 import '../blocs/schedule_bloc.dart';
 import '../blocs/course_bloc.dart';
 import '../blocs/tutor_bloc.dart';
 import '../blocs/student_bloc.dart';
 
-class SchedulesPage extends StatefulWidget {
+class SchedulesPage extends StatefulHookWidget {
   const SchedulesPage({super.key});
 
   @override
@@ -20,8 +18,6 @@ class SchedulesPage extends StatefulWidget {
 }
 
 class _SchedulesPageState extends State<SchedulesPage> {
-  DateTime _selectedDate = DateTime.now();
-
   @override
   void initState() {
     super.initState();
@@ -88,417 +84,15 @@ class _SchedulesPageState extends State<SchedulesPage> {
           },
         ),
       ],
-      child: BlocConsumer<ScheduleBloc, ScheduleState>(
-        listener: (context, state) {
-          // Schedule-specific listener if needed
-        },
-        builder: (context, state) {
-          if (state is ScheduleLoading) {
-            return const Center(child: FCircularProgress());
-          } else if (state is SchedulesLoaded) {
-            final filteredSchedules = _filterSchedulesByDate(
-              state.schedules,
-              _selectedDate,
-            );
-            return FScaffold(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    // Left section: Calendar
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Select Date',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          FCalendar(
-                            control: FCalendarControl.managedDate(
-                              initial: _selectedDate,
-                            ),
-                            onPress: (date) {
-                              setState(() {
-                                _selectedDate = date;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Right section: Schedules list for selected date
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Schedules for ${_formatDate(_selectedDate)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              FButton(
-                                onPress: () => showFPersistentSheet(
-                                  context: context,
-                                  style: const .delta(flingVelocity: 700),
-                                  side: .rtl,
-                                  builder: (context, controller) =>
-                                      _buildScheduleForm(
-                                        controller: controller,
-                                      ),
-                                ),
-                                suffix: const Icon(Icons.add),
-                                child: const Text('Add Schedule'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: _buildSchedulesList(filteredSchedules),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return const FScaffold(
-              child: Center(child: Text('Failed to load schedules')),
-            );
-          }
-        },
-      ),
-    );
-  }
-
-  List<Schedule> _filterSchedulesByDate(
-    List<Schedule> schedules,
-    DateTime date,
-  ) {
-    return schedules.where((schedule) {
-      return schedule.date.year == date.year &&
-          schedule.date.month == date.month &&
-          schedule.date.day == date.day;
-    }).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
-
-  Widget _buildSchedulesList(List<Schedule> schedules) {
-    if (schedules.isEmpty) {
-      return const Center(child: Text('No schedules found'));
-    }
-
-    return FItemGroup.builder(
-      itemBuilder: (context, index) {
-        final schedule = schedules[index];
-        return FItem(
-          prefix: FAvatar.raw(
-            child: Text(
-              schedule.id.isNotEmpty ? schedule.id[0].toUpperCase() : 'S',
+      child: FScaffold(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: FLineCalendar(),
             ),
-          ),
-          title: Text('Schedule ${schedule.course?.name}'),
-          subtitle: Text(
-            '${_formatTime(schedule.startTime)} - ${_formatTime(schedule.endTime)}',
-          ),
-          suffix: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              FSwitch(
-                value: schedule.isActive,
-                onChange: (value) {
-                  context.read<ScheduleBloc>().add(
-                    UpdateSchedule(
-                      schedule.id,
-                      schedule.copyWith(isActive: value),
-                    ),
-                  );
-                },
-              ),
-              FButton(
-                child: Icon(FIcons.eye),
-                onPress: () => _showScheduleDetails(schedule),
-              ),
-              FButton(
-                child: Icon(FIcons.pencil),
-                onPress: () => showFPersistentSheet(
-                  context: context,
-                  style: const .delta(flingVelocity: 700),
-                  side: .rtl,
-                  builder: (context, controller) => _buildScheduleForm(
-                    controller: controller,
-                    schedule: schedule,
-                  ),
-                ),
-              ),
-              FButton(
-                child: Icon(FIcons.trash),
-                onPress: () => _deleteSchedule(schedule),
-              ),
-            ],
-          ),
-        );
-      },
-      count: schedules.length,
-      divider: .full,
-    );
-  }
-
-  Widget _buildScheduleForm({
-    Schedule? schedule,
-    required FPersistentSheetController controller,
-  }) {
-    final isEditing = schedule != null;
-    final formKey = GlobalKey<FormState>();
-    String courseId = isEditing ? schedule.courseId : '';
-    String tutorId = isEditing ? schedule.tutorId : '';
-    List<String> studentIds = isEditing ? List.from(schedule.students) : [];
-    DateTime date = isEditing ? schedule.date : DateTime.now();
-    DateTime startTime = isEditing ? schedule.startTime : DateTime.now();
-    DateTime endTime = isEditing ? schedule.endTime : DateTime.now();
-    bool isActive = isEditing ? schedule.isActive : true;
-
-    return FSheets(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.theme.colors.background,
-          borderRadius: context.theme.style.borderRadius.md,
-          border: .all(color: context.theme.colors.border),
-        ),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 16,
-            children: [
-              Text(
-                isEditing ? 'Edit Schedule' : 'Add New Schedule',
-                style: context.theme.typography.xl,
-              ),
-              // Course Selection
-              BlocBuilder<CourseBloc, CourseState>(
-                builder: (context, courseState) {
-                  if (courseState is CoursesLoaded) {
-                    final activeCourses = courseState.courses
-                        .where((c) => c.isActive)
-                        .toList();
-                    Course? selectedCourse;
-                    if (courseId.isNotEmpty) {
-                      try {
-                        selectedCourse = activeCourses.firstWhere(
-                          (c) => c.id == courseId,
-                        );
-                      } catch (e) {
-                        selectedCourse = null;
-                      }
-                    }
-
-                    return FSelect<Course>.rich(
-                      control: .managed(initial: selectedCourse),
-                      hint: 'Select Course',
-                      format: (c) => c.name,
-                      children: activeCourses
-                          .map(
-                            (course) => FSelectItem.item(
-                              title: Text(course.name),
-                              value: course,
-                            ),
-                          )
-                          .toList(),
-                      validator: (value) =>
-                          value == null ? 'Course is required' : null,
-                      onSaved: (newValue) => courseId = newValue!.id,
-                    );
-                  }
-                  return FSelect<Course>.rich(
-                    control: .managed(),
-                    hint: 'Loading courses...',
-                    format: (c) => c.name,
-                    children: [],
-                  );
-                },
-              ),
-              // Tutor Selection
-              BlocBuilder<TutorBloc, TutorState>(
-                builder: (context, tutorState) {
-                  if (tutorState is TutorsLoaded) {
-                    final activeTutors = tutorState.tutors
-                        .where((t) => t.isActive ?? false)
-                        .toList();
-                    Tutor? selectedTutor;
-                    if (tutorId.isNotEmpty) {
-                      try {
-                        selectedTutor = activeTutors.firstWhere(
-                          (t) => t.id == tutorId,
-                        );
-                      } catch (e) {
-                        selectedTutor = null;
-                      }
-                    }
-
-                    return FSelect<Tutor>.rich(
-                      control: .managed(initial: selectedTutor),
-                      hint: 'Select Tutor',
-                      format: (t) => t.name ?? '',
-                      children: activeTutors
-                          .map(
-                            (tutor) => FSelectItem.item(
-                              title: Text(tutor.name ?? ''),
-                              value: tutor,
-                            ),
-                          )
-                          .toList(),
-                      validator: (value) =>
-                          value == null ? 'Tutor is required' : null,
-                      onSaved: (newValue) => tutorId = newValue?.id ?? '',
-                    );
-                  }
-                  return FSelect<Tutor>.rich(
-                    control: .managed(),
-                    hint: 'Loading tutors...',
-                    format: (t) => t.name,
-                    children: [],
-                  );
-                },
-              ),
-              // Students Multi-Selection
-              BlocBuilder<StudentBloc, StudentState>(
-                builder: (context, studentState) {
-                  if (studentState is StudentsLoaded) {
-                    final activeStudents = studentState.students
-                        .where((s) => s.isActive ?? false)
-                        .toList();
-                    final selectedStudents = activeStudents
-                        .where((s) => studentIds.contains(s.id))
-                        .toList();
-
-                    return FMultiSelect<Student>.rich(
-                      control: .managed(initial: selectedStudents.toSet()),
-                      hint: const Text('Select Students'),
-                      format: (Student student) => Text(student.name ?? ''),
-                      children: activeStudents
-                          .map(
-                            (student) => FSelectItem.item(
-                              title: Text(student.name ?? ''),
-                              value: student,
-                            ),
-                          )
-                          .toList(),
-                      validator: (value) => (value.isEmpty)
-                          ? 'At least one student is required'
-                          : null,
-                      onSaved: (newValue) =>
-                          studentIds = newValue.map((s) => s.id ?? '').toList(),
-                    );
-                  }
-                  return FMultiSelect<Student>.rich(
-                    control: .managed(),
-                    hint: const Text('Loading students...'),
-                    format: (Student student) => Text(student.name),
-                    children: [],
-                  );
-                },
-              ),
-              FDateField.calendar(
-                control: .managed(initial: date),
-                hint: 'Select Date',
-                autovalidateMode: .onUserInteraction,
-              ),
-              FTimeField.picker(
-                control: .managed(initial: FTime.fromDateTime(startTime)),
-                hint: 'Select Start Time',
-                autovalidateMode: .onUserInteraction,
-              ),
-              FTimeField.picker(
-                control: .managed(initial: FTime.fromDateTime(endTime)),
-                hint: 'Select End Time',
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-              ),
-              FSelect<bool>.rich(
-                control: .managed(initial: isActive),
-                hint: 'Select status',
-                format: (s) => s ? 'Active' : 'Inactive',
-                children: [
-                  FSelectItem.item(title: const Text('Active'), value: true),
-                  FSelectItem.item(title: const Text('Inactive'), value: false),
-                ],
-                validator: (value) => value == null ? 'Select status' : null,
-                onSaved: (newValue) => isActive = newValue!,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: FButton(
-                      onPress: () {
-                        controller.hide();
-                      },
-                      variant: .outline,
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FButton(
-                      onPress: () {
-                        if (!formKey.currentState!.validate()) return;
-                        formKey.currentState!.save();
-
-                        final updatedSchedule = isEditing
-                            ? schedule.copyWith(
-                                courseId: courseId,
-                                tutorId: tutorId,
-                                studentIds: studentIds,
-                                date: date,
-                                startTime: startTime,
-                                endTime: endTime,
-                                isActive: isActive,
-                              )
-                            : Schedule.create(
-                                courseId: courseId,
-                                tutorId: tutorId,
-                                roomId: '',
-                                studentIds: studentIds,
-                                date: date,
-                                startTime: startTime,
-                                endTime: endTime,
-                                isActive: isActive,
-                              );
-
-                        if (isEditing) {
-                          context.read<ScheduleBloc>().add(
-                            UpdateSchedule(updatedSchedule.id, updatedSchedule),
-                          );
-                        } else {
-                          context.read<ScheduleBloc>().add(
-                            CreateSchedule(updatedSchedule),
-                          );
-                        }
-
-                        controller.hide();
-                      },
-                      child: Text(isEditing ? 'Update' : 'Add'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            Expanded(child: _buildScheduleList()),
+          ],
         ),
       ),
     );
@@ -594,5 +188,26 @@ class _SchedulesPageState extends State<SchedulesPage> {
     } catch (e) {
       return dateTime.toString();
     }
+  }
+
+  Widget _buildScheduleList() {
+    return FCard(
+      child: BlocBuilder<TutorBloc, TutorState>(
+        builder: (context, state) {
+          if (state is TutorsLoaded) {
+            return Expanded(
+              child: ListView.separated(
+                itemCount: state.tutors.length,
+                itemBuilder: (context, index) => Text(state.tutors[index].name),
+                separatorBuilder: (BuildContext context, int index) {
+                  return const Divider();
+                },
+              ),
+            );
+          }
+          return const Center(child: FCircularProgress());
+        },
+      ),
+    );
   }
 }

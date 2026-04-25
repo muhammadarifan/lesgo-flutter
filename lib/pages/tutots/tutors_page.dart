@@ -3,8 +3,9 @@ import 'package:forui/forui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lesgo_flutter/models/tutor/tutor.dart';
-import '../blocs/tutor_bloc.dart';
-import '../enums/gender_enum.dart';
+import 'package:lesgo_flutter/pages/tutots/tutor_detail_dialog.dart';
+import 'package:lesgo_flutter/pages/tutots/tutor_form.dart';
+import '../../blocs/tutor_bloc.dart';
 
 class TutorsPage extends StatefulWidget {
   const TutorsPage({super.key});
@@ -99,7 +100,7 @@ class _TutorsPageState extends State<TutorsPage> {
                     style: const .delta(flingVelocity: 700),
                     side: .rtl,
                     builder: (context, controller) =>
-                        _buildTutorForm(controller: controller),
+                        TutorForm(controller: controller),
                   ),
                   suffix: const Icon(Icons.add),
                   child: const Text('Add Tutor'),
@@ -225,7 +226,7 @@ class _TutorsPageState extends State<TutorsPage> {
                   style: const .delta(flingVelocity: 700),
                   side: .rtl,
                   builder: (context, controller) =>
-                      _buildTutorForm(controller: controller, tutor: tutor),
+                      TutorForm(controller: controller, tutor: tutor),
                 ),
               ),
               FButton(
@@ -237,156 +238,6 @@ class _TutorsPageState extends State<TutorsPage> {
         );
       },
       count: tutors.length,
-    );
-  }
-
-  Widget _buildTutorForm({
-    Tutor? tutor,
-    required FPersistentSheetController controller,
-  }) {
-    final isEditing = tutor != null;
-    final formKey = GlobalKey<FormState>();
-    String name = isEditing ? tutor.name : '';
-    String? email = isEditing ? tutor.email : '';
-    String? phone = isEditing ? tutor.phone : '';
-    String? address = isEditing ? tutor.address : '';
-    GenderEnum gender = isEditing ? tutor.gender : GenderEnum.male;
-    bool isActive = isEditing ? tutor.isActive : true;
-
-    return FSheets(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.theme.colors.background,
-          borderRadius: context.theme.style.borderRadius.md,
-          border: .all(color: context.theme.colors.border),
-        ),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: .center,
-            spacing: 16,
-            children: [
-              Text(
-                isEditing ? 'Edit Tutor' : 'Add New Tutor',
-                style: context.theme.typography.xl,
-              ),
-              FTextFormField(
-                control: .managed(initial: TextEditingValue(text: name)),
-                hint: 'Name',
-                autovalidateMode: .onUserInteraction,
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Name is required' : null,
-                onSaved: (newValue) => name = newValue!,
-              ),
-              FTextFormField(
-                control: .managed(initial: TextEditingValue(text: email ?? '')),
-                hint: 'Email',
-                autovalidateMode: .onUserInteraction,
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Email is required' : null,
-                onSaved: (newValue) => email = newValue!,
-              ),
-              FTextFormField(
-                control: .managed(initial: TextEditingValue(text: phone ?? '')),
-                hint: 'Phone',
-                autovalidateMode: .onUserInteraction,
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Phone is required' : null,
-                onSaved: (newValue) => phone = newValue!,
-              ),
-              FTextFormField(
-                control: .managed(
-                  initial: TextEditingValue(text: address ?? ''),
-                ),
-                hint: 'Address',
-                autovalidateMode: .onUserInteraction,
-                validator: (value) =>
-                    value!.trim().isEmpty ? 'Address is required' : null,
-                onSaved: (newValue) => address = newValue!,
-              ),
-              FSelect<GenderEnum>.rich(
-                control: .managed(initial: gender),
-                hint: 'Select gender',
-                format: (g) => g.displayName,
-                children: GenderEnum.values
-                    .map(
-                      (g) => FSelectItem.item(
-                        title: Text(g.displayName),
-                        value: g,
-                      ),
-                    )
-                    .toList(),
-                validator: (value) => value == null ? 'Select gender' : null,
-                onSaved: (newValue) => gender = newValue!,
-              ),
-              FSelect<bool>.rich(
-                control: .managed(initial: isActive),
-                hint: 'Select status',
-                format: (s) => s ? 'Active' : 'Inactive',
-                children: [
-                  FSelectItem.item(title: const Text('Active'), value: true),
-                  FSelectItem.item(title: const Text('Inactive'), value: false),
-                ],
-                validator: (value) => value == null ? 'Select status' : null,
-                onSaved: (newValue) => isActive = newValue!,
-              ),
-
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: FButton(
-                      onPress: () => controller.hide(),
-                      variant: .outline,
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FButton(
-                      onPress: () {
-                        if (!formKey.currentState!.validate()) return;
-                        formKey.currentState!.save();
-
-                        final updatedTutor = isEditing
-                            ? tutor.copyWith(
-                                name: name.trim(),
-                                email: email?.trim(),
-                                phone: phone?.trim(),
-                                address: address?.trim(),
-                                gender: gender,
-                                isActive: isActive,
-                              )
-                            : Tutor.create(
-                                name: name.trim(),
-                                email: email?.trim() ?? '',
-                                phone: phone?.trim() ?? '',
-                                address: address?.trim() ?? '',
-                                gender: gender,
-                              );
-
-                        if (isEditing) {
-                          context.read<TutorBloc>().add(
-                            UpdateTutor(updatedTutor.id, updatedTutor),
-                          );
-                        } else {
-                          context.read<TutorBloc>().add(
-                            CreateTutor(updatedTutor),
-                          );
-                        }
-
-                        controller.hide();
-                      },
-                      child: Text(isEditing ? 'Update' : 'Add'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -418,34 +269,7 @@ class _TutorsPageState extends State<TutorsPage> {
   void _showTutorDetails(Tutor tutor) {
     showFDialog(
       context: context,
-      builder: (context, style, animation) => FDialog(
-        title: Text('Detail Tutor'),
-        body: FItemGroup(
-          style: const .delta(spacing: 4),
-          intrinsicWidth: null,
-          divider: .full,
-          children: [
-            .item(title: const Text('Name'), details: Text(tutor.name)),
-            .item(title: const Text('Email'), details: Text(tutor.email ?? '')),
-            .item(title: const Text('Phone'), details: Text(tutor.phone ?? '')),
-            .item(
-              title: const Text('Address'),
-              details: Text(tutor.address ?? ''),
-            ),
-            .item(
-              title: const Text('Gender'),
-              details: Text(tutor.gender.displayName),
-            ),
-            .item(
-              title: const Text('Status'),
-              details: Text(tutor.isActive ? 'Active' : 'Inactive'),
-            ),
-          ],
-        ),
-        actions: [
-          FButton(onPress: () => context.pop(), child: const Text('Close')),
-        ],
-      ),
+      builder: (context, style, animation) => TutorDetailDialog(tutor: tutor),
     );
   }
 }

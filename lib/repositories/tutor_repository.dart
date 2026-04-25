@@ -38,8 +38,12 @@ class TutorRepository {
   Future<Tutor> create(Tutor tutor) async {
     try {
       final pbInstance = await pb;
-      final data = tutor.toJson()..remove('id');
+      final coursePlaceId =
+          pbInstance.authStore.record?.data['course_place'] as String;
+      final data = tutor.copyWith(coursePlaceId: coursePlaceId).toJson()
+        ..remove('id');
       final record = await pbInstance.collection('tutors').create(body: data);
+      print(record);
       return Tutor.fromJson(record.data);
     } on ClientException catch (e) {
       debugPrint(e.response.toString());

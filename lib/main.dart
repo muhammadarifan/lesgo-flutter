@@ -20,7 +20,7 @@ import 'pages/dashboard_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/schedules_page.dart';
-import 'pages/tutors_page.dart';
+import 'pages/tutots/tutors_page.dart';
 import 'pages/students_page.dart';
 import 'pages/courses_page.dart';
 import 'pages/invoices_page.dart';
